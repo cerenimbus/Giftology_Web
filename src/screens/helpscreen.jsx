@@ -1,13 +1,16 @@
 /*
- * Simple Help Screen
- * Uses the same sidebar design from Dashboard
+ * JA11/11/25
+ * src/screens/HelpScreen.jsx (web)
+ * Giftology Relationship Radar - Help Screen
+ * The layout is simple, with a Giftology logo and sample text paragraphs.
+ * Euan Flores
  */
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import giftologyLogo from "./assets/giftology.png";
 
-// 🔹 Icon imports
+// Icons for sidebar
 import {
   DashboardIcon,
   ReportsIcon,
@@ -17,26 +20,39 @@ import {
   FeedbackIcon,
 } from "../components/Icons";
 
+// This is the main function for the Help Screen
 export default function HelpScreen() {
   const navigate = useNavigate();
+
+  // Check if the screen is wide enough to show the sidebar
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
-  // Resize listener
+  // This runs when the window size changes
   useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    function checkWindowSize() {
+      if (window.innerWidth >= 1024) {
+        setIsDesktop(true);
+      } else {
+        setIsDesktop(false);
+      }
+    }
+
+    window.addEventListener("resize", checkWindowSize);
+    return () => {
+      window.removeEventListener("resize", checkWindowSize);
+    };
   }, []);
 
   return (
     <div style={styles.page}>
-      {/* Sidebar (same as Dashboard) */}
+      {/* Show sidebar only if screen is big */}
       {isDesktop && <Sidebar navigate={navigate} />}
 
-      {/* Main content */}
+      {/* Main content on the right side */}
       <main style={{ ...styles.main, marginLeft: isDesktop ? 280 : 0 }}>
         <h1 style={styles.title}>Help Screen</h1>
 
+        {/* Section 1 */}
         <div style={styles.section}>
           <h3 style={styles.subTitle}>Lorem ipsum dolor</h3>
           <p style={styles.text}>
@@ -44,12 +60,11 @@ export default function HelpScreen() {
             faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi
             pretium tellus duis convallis. Tempus leo eu aenean sed diam urna
             tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas.
-            Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut
-            hendrerit semper vel class aptent taciti sociosqu. Ad litora
-            torquent per conubia nostra inceptos himenaeos.
+            Iaculis massa nisl malesuada lacinia integer nunc posuere.
           </p>
         </div>
 
+        {/* Section 2 */}
         <div style={styles.section}>
           <h3 style={styles.subTitle}>Lorem ipsum</h3>
           <p style={styles.text}>
@@ -60,6 +75,7 @@ export default function HelpScreen() {
           </p>
         </div>
 
+        {/* Section 3 */}
         <div style={styles.section}>
           <h3 style={styles.subTitle}>Lorem ipsum dolor</h3>
           <p style={styles.text}>
@@ -67,12 +83,11 @@ export default function HelpScreen() {
             faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi
             pretium tellus duis convallis. Tempus leo eu aenean sed diam urna
             tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas.
-            Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut
-            hendrerit semper vel class aptent taciti sociosqu. Ad litora
-            torquent per conubia nostra inceptos himenaeos.
+            Iaculis massa nisl malesuada lacinia integer nunc posuere.
           </p>
         </div>
 
+        {/* Section 4 */}
         <div style={styles.section}>
           <h3 style={styles.subTitle}>Lorem ipsum dolor</h3>
           <p style={styles.text}>
@@ -80,9 +95,7 @@ export default function HelpScreen() {
             faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi
             pretium tellus duis convallis. Tempus leo eu aenean sed diam urna
             tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas.
-            Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut
-            hendrerit semper vel class aptent taciti sociosqu. Ad litora
-            torquent per conubia nostra inceptos himenaeos.
+            Iaculis massa nisl malesuada lacinia integer nunc posuere.
           </p>
         </div>
       </main>
@@ -90,23 +103,24 @@ export default function HelpScreen() {
   );
 }
 
-/* 🧭 Sidebar Component (same as Dashboard) */
+// Sidebar on the left side
 function Sidebar({ navigate }) {
   return (
     <aside style={styles.sidebar}>
-      {/* Logo */}
+      {/* Logo at the top */}
       <div style={styles.logoContainer}>
-        <img src={giftologyLogo} alt="Giftology" style={styles.logoImage} />
+        <img src={giftologyLogo} alt="Giftology Logo" style={styles.logoImage} />
       </div>
 
+      {/* Menu section title */}
       <div style={styles.menuHeader}>Discover</div>
 
-      {/* Menu Items */}
+      {/* Menu items list */}
       <MenuItem icon={<DashboardIcon size={16} />} text="Dashboard" />
       <MenuItem icon={<ReportsIcon size={16} />} text="Reports" />
       <MenuItem icon={<CalendarIcon size={16} />} text="Dates & DOV" />
       <MenuItem icon={<ContactsIcon size={16} />} text="Contacts" />
-      <MenuItem icon={<HelpIcon size={16} color="#e84b4b" />} text="Help" active />
+      <MenuItem icon={<HelpIcon size={16} color="#e84b4b" />} text="Help" active={true} />
       <MenuItem
         icon={<FeedbackIcon size={16} />}
         text="Feedback"
@@ -116,36 +130,37 @@ function Sidebar({ navigate }) {
   );
 }
 
-/* 📦 Sidebar item */
+// Each menu button in the sidebar
 function MenuItem({ icon, text, onClick, active }) {
+  let itemStyle = { ...styles.menuItem };
+
+  // If the item is active (selected), change the style color
+  if (active === true) {
+    itemStyle.backgroundColor = "#fdf2f2";
+    itemStyle.borderLeft = "4px solid #e84b4b";
+    itemStyle.color = "#e84b4b";
+  }
+
   return (
-    <div
-      onClick={onClick}
-      style={{
-        ...styles.menuItem,
-        ...(active
-          ? { backgroundColor: "#fdf2f2", borderLeft: "4px solid #e84b4b", color: "#e84b4b" }
-          : {}),
-      }}
-    >
+    <div onClick={onClick} style={itemStyle}>
       {icon}
       <span>{text}</span>
     </div>
   );
 }
 
-/* 🎨 Styles */
+// Page styles (like CSS but inside JavaScript)
 const styles = {
   page: {
     display: "flex",
     minHeight: "100vh",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
   },
 
   sidebar: {
     width: 280,
-    backgroundColor: "#fff",
-    borderRight: "1px solid #eee",
+    backgroundColor: "#ffffff",
+    borderRight: "1px solid #eeeeee",
     height: "100vh",
     position: "fixed",
     top: 0,
@@ -156,7 +171,8 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    padding: "20px 0",
+    paddingTop: 20,
+    paddingBottom: 20,
     borderBottom: "1px solid #f0f0f0",
   },
 
@@ -166,8 +182,10 @@ const styles = {
   },
 
   menuHeader: {
-    color: "#999",
-    padding: "12px 20px 8px",
+    color: "#999999",
+    paddingTop: 12,
+    paddingLeft: 20,
+    paddingBottom: 8,
     fontSize: 13,
     textTransform: "uppercase",
   },
@@ -176,15 +194,20 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: 10,
-    padding: "10px 20px",
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 20,
     fontSize: 14,
     cursor: "pointer",
-    color: "#333",
+    color: "#333333",
   },
 
   main: {
     flex: 1,
-    padding: "40px 60px",
+    paddingTop: 40,
+    paddingLeft: 60,
+    paddingRight: 60,
+    overflowY: "auto",
   },
 
   title: {
@@ -202,7 +225,7 @@ const styles = {
 
   text: {
     fontSize: 15,
-    color: "#333",
+    color: "#333333",
     lineHeight: 1.6,
   },
 

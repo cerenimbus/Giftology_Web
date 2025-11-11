@@ -1,21 +1,42 @@
+/*
+ * JA11/10/25
+ * src/screens/LoadingScreen.jsx (web)
+ * Giftology Relationship Radar - Loading Screen
+ * This screen shows a loading spinner with the Giftology logo and title.
+ * The screen disappears after a few seconds.
+ * Euan Flores
+ */
+
 import React, { useEffect, useState } from "react";
-import giftologyLogo from "./assets/giftology.png"; // ✅ correct path
+import giftologyLogo from "./assets/giftology.png"; // logo image
 
-export default function LoadingScreen({ duration = 2500, onFinish }) {
-  const [visible, setVisible] = useState(true);
+export default function LoadingScreen(props) {
+  const [isVisible, setIsVisible] = useState(true);
 
+  // This part will hide the loading screen after a short time
   useEffect(() => {
+    const timeLimit = props.duration || 2500; // how long it stays visible (in milliseconds)
     const timer = setTimeout(() => {
-      setVisible(false);
-      if (onFinish) onFinish();
-    }, duration);
-    return () => clearTimeout(timer);
-  }, [duration, onFinish]);
+      setIsVisible(false);
+      if (props.onFinish) {
+        props.onFinish();
+      }
+    }, timeLimit);
 
-  if (!visible) return null;
+    // This cleans up the timer if the page changes before time is up
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [props.duration, props.onFinish]);
+
+  // If not visible anymore, return nothing (empty screen)
+  if (isVisible === false) {
+    return null;
+  }
 
   return (
     <div style={styles.page}>
+      {/* This style adds the spinning animation and responsive rules */}
       <style>
         {`
           @keyframes spin {
@@ -46,8 +67,9 @@ export default function LoadingScreen({ duration = 2500, onFinish }) {
         `}
       </style>
 
+      {/* The main content in the center */}
       <div style={styles.content}>
-        <div style={styles.textSection}>
+        <div style={styles.textArea}>
           <h1 style={styles.radarTitle}>Relationship Radar</h1>
           <p style={styles.poweredBy}>Powered by:</p>
         </div>
@@ -59,18 +81,19 @@ export default function LoadingScreen({ duration = 2500, onFinish }) {
           style={styles.logo}
         />
 
+        {/* The loading circle animation */}
         <div className="loading-spinner" style={styles.spinner}></div>
       </div>
 
-      {/* Subtle background shapes */}
-      <div style={{ ...styles.shape, ...styles.shape1 }}></div>
-      <div style={{ ...styles.shape, ...styles.shape2 }}></div>
-      <div style={{ ...styles.shape, ...styles.shape3 }}></div>
+      {/* Background shapes just for decoration */}
+      <div style={{ ...styles.shape, ...styles.shapeOne }}></div>
+      <div style={{ ...styles.shape, ...styles.shapeTwo }}></div>
+      <div style={{ ...styles.shape, ...styles.shapeThree }}></div>
     </div>
   );
 }
 
-/* 🎨 Inline CSS styles */
+// Page styles (like CSS but written inside JavaScript)
 const styles = {
   page: {
     display: "flex",
@@ -82,69 +105,78 @@ const styles = {
     overflow: "hidden",
     position: "relative",
     fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif",
   },
+
   content: {
     textAlign: "left",
     maxWidth: "650px",
     zIndex: 10,
   },
-  textSection: {
-    marginBottom: "22px",
-    marginLeft: "10px",
+
+  textArea: {
+    marginBottom: 20,
+    marginLeft: 10,
   },
+
   radarTitle: {
-    fontSize: "36px", // 🔹 larger overall
-    fontWeight: "400", // 🔹 normal weight (not bold)
+    fontSize: 36,
+    fontWeight: 400,
     color: "#000000",
-    marginBottom: "4px",
-    lineHeight: "1.2",
+    marginBottom: 5,
+    lineHeight: 1.2,
   },
+
   poweredBy: {
-    fontSize: "18px", // 🔹 larger but lighter
-    fontWeight: "400",
+    fontSize: 18,
     color: "#555555",
-    marginBottom: "16px",
+    marginBottom: 16,
   },
+
   logo: {
-    width: "380px", // 🔹 bigger logo for visual balance
+    width: 380,
     height: "auto",
-    marginLeft: "10px",
-    marginBottom: "38px",
+    marginLeft: 10,
+    marginBottom: 36,
     objectFit: "contain",
-    borderRadius: "8px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.18)", // 🔹 subtle shadow for depth
+    borderRadius: 8,
+    boxShadow: "0 5px 15px rgba(0,0,0,0.18)",
   },
+
   spinner: {
-    width: "56px", // 🔹 slightly larger spinner
-    height: "56px",
+    width: 56,
+    height: 56,
     border: "4px solid #f5b7b7",
     borderTopColor: "#e84b4b",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
     margin: "0 auto",
   },
+
   shape: {
     position: "absolute",
     border: "1px solid rgba(232, 75, 75, 0.1)",
     borderRadius: "50%",
     pointerEvents: "none",
   },
-  shape1: {
-    width: "250px",
-    height: "250px",
+
+  shapeOne: {
+    width: 250,
+    height: 250,
     top: "5%",
     right: "10%",
   },
-  shape2: {
-    width: "340px",
-    height: "340px",
+
+  shapeTwo: {
+    width: 340,
+    height: 340,
     bottom: "8%",
     left: "8%",
   },
-  shape3: {
-    width: "540px",
-    height: "540px",
+
+  shapeThree: {
+    width: 540,
+    height: 540,
     top: "-10%",
     left: "-10%",
     borderRadius: "20%",
