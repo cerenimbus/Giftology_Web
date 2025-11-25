@@ -6,6 +6,7 @@ import Contacts from './screens/Contacts'
 import LoadingScreen from './screens/loading' 
 import HelpScreen from './screens/helpscreen'
 import Login from './screens/login'
+import Feedback from './screens/Feedback'
 
 function App() {
   const [showLoading, setShowLoading] = useState(true)
@@ -27,6 +28,7 @@ function App() {
           <Route path="/reset-password" element={<ForgotPassword />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/help" element={<HelpScreen />} />
+          <Route path="/feedback" element={<Feedback />} />
         </Routes>
       )}
     </Router>

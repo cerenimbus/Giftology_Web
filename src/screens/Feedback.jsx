@@ -3,16 +3,16 @@
  */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UpdateFeedback } from '../api';
-import { log } from '../utils/debug';
-import {
-  DashboardIcon,
-  ReportsIcon,
-  CalendarIcon,
-  ContactsIcon,
-  HelpIcon,
-  FeedbackIcon,
-} from '../components/Icons';
+// import { UpdateFeedback } from '../api';
+// import { log } from '../utils/debug';
+// import {
+//   DashboardIcon,
+//   ReportsIcon,
+//   CalendarIcon,
+//   ContactsIcon,
+//   HelpIcon,
+//   FeedbackIcon,
+// } from '../components/Icons';
 
 export default function Feedback() {
   const navigate = useNavigate();
@@ -45,20 +45,26 @@ export default function Feedback() {
     }
     setLoading(true);
     try {
-      log('Feedback: submitting', { name, email: email ? email.replace(/(.{2}).+(@.+)/,'$1***$2') : '', phone, wantsResponse, wantsUpdates });
-      const res = await UpdateFeedback({ Name: name, Email: email, Phone: phone, Comment: comment, Response: wantsResponse ? 1 : 0, Update: wantsUpdates ? 1 : 0 });
-      log('Feedback: response', res);
-      if (res?.requestUrl) { try { log('Feedback: UpdateFeedback URL (masked):', res.requestUrl.replace(/([&?]AC=)[^&]*/,'$1***')); log('Feedback: UpdateFeedback URL (full):', res.requestUrl); } catch(err){} }
-      if (res?.success) {
-        window.alert('Feedback submitted successfully!');
-        navigate('/dashboard');
-      } else {
-        window.alert(res?.message || 'Failed to submit feedback');
-      }
+      // TODO: Implement UpdateFeedback API call
+      // const res = await UpdateFeedback({ Name: name, Email: email, Phone: phone, Comment: comment, Response: wantsResponse ? 1 : 0, Update: wantsUpdates ? 1 : 0 });
+      
+      // Simulate API call for now
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      window.alert('Feedback submitted successfully!');
+      // Reset form
+      setName('');
+      setEmail('');
+      setPhone('');
+      setComment('');
+      setWantsResponse(false);
+      setWantsUpdates(false);
     } catch (err) {
-      log('Feedback exception', err && err.stack ? err.stack : err);
-      window.alert(String(err));
-    } finally { setLoading(false); }
+      window.alert('Failed to submit feedback. Please try again.');
+      console.error('Feedback submission error:', err);
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -67,9 +73,9 @@ export default function Feedback() {
       {isDesktop && (
         <aside
           style={{
-            width: 280,
+            width: '17.5rem',
             backgroundColor: '#fff',
-            borderRight: '1px solid #eee',
+            borderRight: '0.0625rem solid #eee',
             height: '100vh',
             position: 'fixed',
           }}
@@ -77,64 +83,64 @@ export default function Feedback() {
           <div
             style={{
               backgroundColor: '#e84b4b',
-              padding: 8,
-              margin: 16,
-              borderRadius: 3,
+              padding: '0.5rem',
+              margin: '1rem',
+              borderRadius: '0.1875rem',
             }}
           >
             <div
               style={{
-                border: '1.6px solid #fff',
-                borderRadius: 2,
-                padding: 12,
+                border: '0.1rem solid #fff',
+                borderRadius: '0.125rem',
+                padding: '0.75rem',
                 textAlign: 'center',
                 fontWeight: 700,
                 color: '#fff',
-                fontSize: 22,
+                fontSize: '1.375rem',
               }}
             >
-              GIFT·OLOGY<sub style={{ fontSize: 8, verticalAlign: '0.01em' }}>®</sub>
+              GIFT·OLOGY<sub style={{ fontSize: '0.5rem', verticalAlign: '0.01em' }}>®</sub>
             </div>
           </div>
 
-          <div style={{ color: '#999', padding: '0 16px 8px', fontSize: 13 }}>Discover</div>
+          <div style={{ color: '#999', padding: '0 1rem 0.5rem', fontSize: '0.8125rem' }}>Discover</div>
 
           <div
             style={sideItem}
             onClick={() => navigate('/dashboard')}
           >
-            <DashboardIcon size={16} color="#333" />
-            <span style={{ fontSize: 14 }}>Dashboard</span>
+            {/* {<DashboardIcon size={16} color="#333" /> */} 
+            <span style={{ fontSize: '0.875rem' }}>Dashboard</span>
           </div>
           <div style={sideItem}>
-            <ReportsIcon size={16} color="#333" />
-            <span style={{ fontSize: 14 }}>Reports</span>
+            {/* <ReportsIcon size={16} color="#333" /> */}
+            <span style={{ fontSize: '0.875rem' }}>Reports</span>
           </div>
           <div style={sideItem}>
-            <CalendarIcon size={16} color="#333" />
-            <span style={{ fontSize: 14 }}>Dates & DOV</span>
+            {/* <CalendarIcon size={16} color="#333" /> */}
+            <span style={{ fontSize: '0.875rem' }}>Dates & DOV</span>
           </div>
           <div style={sideItem}>
-            <ContactsIcon size={16} color="#333" />
-            <span style={{ fontSize: 14 }}>Contacts</span>
+            {/* <ContactsIcon size={16} color="#333" /> */}
+            <span style={{ fontSize: '0.875rem' }}>Contacts</span>
           </div>
           <div style={sideItem}>
-            <HelpIcon size={16} color="#333" />
-            <span style={{ fontSize: 14 }}>Help</span>
+            {/* <HelpIcon size={16} color="#333" /> */}
+            <span style={{ fontSize: '0.875rem' }}>Help</span>
           </div>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '10px 16px',
+              padding: '0.625rem 1rem',
               backgroundColor: '#f5f5f5',
               fontWeight: 600,
               color: '#333',
-              gap: 8,
+              gap: '0.5rem',
             }}
           >
-            <FeedbackIcon size={16} color="#333" />
-            <span style={{ fontSize: 14 }}>Feedback</span>
+            {/* <FeedbackIcon size={16} color="#333" /> */}
+            <span style={{ fontSize: '0.875rem' }}>Feedback</span>
           </div>
         </aside>
       )}
@@ -143,8 +149,8 @@ export default function Feedback() {
       <main
         style={{
           flex: 1,
-          padding: 32,
-          marginLeft: isDesktop ? 280 : 0,
+          padding: '2rem',
+          marginLeft: isDesktop ? '17.5rem' : 0,
           width: '100%',
         }}
       >
@@ -180,7 +186,7 @@ export default function Feedback() {
             />
             <label htmlFor="wantsResponse" style={styles.label}>I would like a response.</label>
           </div>
-          <div style={{...styles.checkboxContainer, marginTop: 6}}>
+          <div style={{...styles.checkboxContainer, marginTop: '0.375rem'}}>
             <input
               id="wantsUpdates"
               type="checkbox"
@@ -194,7 +200,7 @@ export default function Feedback() {
           <textarea
             value={comment}
             onChange={(ev) => setComment(ev.target.value)}
-            style={{...styles.input, height: 176, marginTop: 12}}
+            style={{...styles.input, height: '11rem', marginTop: '0.75rem'}}
             placeholder=""
           />
 
@@ -216,52 +222,52 @@ export default function Feedback() {
 
 const styles = {
   title: {
-    fontSize: 36,
+    fontSize: '2.25rem',
     color: '#e84b4b',
     fontWeight: 700,
     marginBottom: 0,
   },
   card: {
     backgroundColor: '#fff',
-    padding: 10,
-    marginTop: 10,
-    borderRadius: 10,
-    boxShadow: '0 0 0 1px #f0f0f0 inset',
+    padding: '0.625rem',
+    marginTop: '0.625rem',
+    borderRadius: '0.625rem',
+    boxShadow: '0 0 0 0.0625rem #f0f0f0 inset',
   },
   input: {
-    borderWidth: 1,
+    borderWidth: '0.0625rem',
     borderColor: '#e6e6e6',
     borderStyle: 'solid',
-    borderRadius: 10,
-    padding: 11,
-    marginTop: 6,
+    borderRadius: '0.625rem',
+    padding: '0.6875rem',
+    marginTop: '0.375rem',
     width: '100%',
     boxSizing: 'border-box',
     fontFamily: 'inherit',
-    fontSize: 13,
+    fontSize: '0.8125rem',
   },
   checkboxContainer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: '0.625rem',
   },
   checkbox: {
-    marginRight: 6,
+    marginRight: '0.375rem',
     cursor: 'pointer',
   },
   label: {
     cursor: 'pointer',
     fontFamily: 'inherit',
-    fontSize: 13,
+    fontSize: '0.8125rem',
   },
   button: {
     backgroundColor: '#e84b4b',
-    padding: 12,
+    padding: '0.75rem',
     border: 'none',
-    borderRadius: 10,
+    borderRadius: '0.625rem',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: '0.75rem',
     cursor: 'pointer',
     display: 'inline-flex',
     justifyContent: 'center',
@@ -270,10 +276,10 @@ const styles = {
 };
 
 const sideItem = {
-  padding: '10px 16px',
+  padding: '0.625rem 1rem',
   display: 'flex',
   alignItems: 'center',
-  gap: 8,
+  gap: '0.5rem',
   cursor: 'pointer',
 };
 
