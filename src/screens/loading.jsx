@@ -2,9 +2,9 @@
  * JA11/10/25
  * src/screens/LoadingScreen.jsx (web)
  * Giftology Relationship Radar - Loading Screen
- * This screen shows a loading spinner with the Giftology logo and title.
- * The screen disappears after a few seconds.
- * Euan Flores
+ * Responsive + Orientation Aware Version
+ * Euan Flores 
+ * MODIFIED KML 11/25/2025
  */
 
 import React, { useEffect, useState } from "react";
@@ -13,30 +13,22 @@ import giftologyLogo from "./assets/giftology.png"; // logo image
 export default function LoadingScreen(props) {
   const [isVisible, setIsVisible] = useState(true);
 
-  // This part will hide the loading screen after a short time
+  // Auto-hide loading screen
   useEffect(() => {
-    const timeLimit = props.duration || 2500; // how long it stays visible (in milliseconds)
+    const timeLimit = props.duration || 2500;
     const timer = setTimeout(() => {
       setIsVisible(false);
-      if (props.onFinish) {
-        props.onFinish();
-      }
+      props.onFinish && props.onFinish();
     }, timeLimit);
 
-    // This cleans up the timer if the page changes before time is up
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [props.duration, props.onFinish]);
 
-  // If not visible anymore, return nothing (empty screen)
-  if (isVisible === false) {
-    return null;
-  }
+  if (!isVisible) return null;
 
   return (
     <div style={styles.page}>
-      {/* This style adds the spinning animation and responsive rules */}
+      {/* RESPONSIVE STYLES + ORIENTATION SUPPORT */}
       <style>
         {`
           @keyframes spin {
@@ -44,34 +36,67 @@ export default function LoadingScreen(props) {
             to { transform: rotate(360deg); }
           }
 
-          @media (max-width: 768px) {
+          /* ----------- ORIENTATION SUPPORT ----------- */
+
+          /* Portrait Mode (Phone & Tablet) */
+          @media (orientation: portrait) {
             .giftology-logo {
-              width: 240px !important;
+              width: 60vw !important;
+              max-width: 280px !important;
             }
             .radar-title {
-              font-size: 26px !important;
+              font-size: 6vw !important;
             }
             .powered-by {
-              font-size: 14px !important;
+              font-size: 3.5vw !important;
             }
           }
 
-          @media (max-width: 480px) {
+          /* Landscape Mode (Phone & Tablet) */
+          @media (orientation: landscape) {
             .giftology-logo {
-              width: 200px !important;
+              width: 35vw !important;
+              max-width: 260px !important;
             }
             .radar-title {
-              font-size: 22px !important;
+              font-size: 4vw !important;
             }
+            .powered-by {
+              font-size: 2vw !important;
+            }
+          }
+
+          /* ----------- WIDTH BREAKPOINTS ----------- */
+
+          @media (max-width: 1024px) {
+            .giftology-logo { width: 320px !important; }
+            .radar-title { font-size: 32px !important; }
+            .powered-by { font-size: 16px !important; }
+          }
+
+          @media (max-width: 768px) {
+            .giftology-logo { width: 250px !important; }
+            .radar-title { font-size: 26px !important; }
+            .powered-by { font-size: 14px !important; }
+          }
+
+          @media (max-width: 480px) {
+            .giftology-logo { width: 200px !important; }
+            .radar-title { font-size: 22px !important; }
+            .powered-by { font-size: 13px !important; }
           }
         `}
       </style>
 
-      {/* The main content in the center */}
+      {/* MAIN CONTENT */}
       <div style={styles.content}>
         <div style={styles.textArea}>
-          <h1 style={styles.radarTitle}>Relationship Radar</h1>
-          <p style={styles.poweredBy}>Powered by:</p>
+          <h1 className="radar-title" style={styles.radarTitle}>
+            Relationship Radar
+          </h1>
+          <p className="powered-by" style={styles.poweredBy}>
+            Powered by:
+          </p>
         </div>
 
         <img
@@ -81,11 +106,11 @@ export default function LoadingScreen(props) {
           style={styles.logo}
         />
 
-        {/* The loading circle animation */}
+        {/* SPINNER */}
         <div className="loading-spinner" style={styles.spinner}></div>
       </div>
 
-      {/* Background shapes just for decoration */}
+      {/* DECORATIVE SHAPES */}
       <div style={{ ...styles.shape, ...styles.shapeOne }}></div>
       <div style={{ ...styles.shape, ...styles.shapeTwo }}></div>
       <div style={{ ...styles.shape, ...styles.shapeThree }}></div>
@@ -93,7 +118,8 @@ export default function LoadingScreen(props) {
   );
 }
 
-// Page styles (like CSS but written inside JavaScript)
+// ---------------- STYLES ----------------
+
 const styles = {
   page: {
     display: "flex",
@@ -111,6 +137,7 @@ const styles = {
   content: {
     textAlign: "left",
     maxWidth: "650px",
+    width: "90vw",
     zIndex: 10,
   },
 
@@ -125,12 +152,14 @@ const styles = {
     color: "#000000",
     marginBottom: 5,
     lineHeight: 1.2,
+    transition: "0.3s ease",
   },
 
   poweredBy: {
     fontSize: 18,
     color: "#555555",
     marginBottom: 16,
+    transition: "0.3s ease",
   },
 
   logo: {
@@ -141,6 +170,7 @@ const styles = {
     objectFit: "contain",
     borderRadius: 8,
     boxShadow: "0 5px 15px rgba(0,0,0,0.18)",
+    transition: "width 0.3s ease",
   },
 
   spinner: {
@@ -158,27 +188,34 @@ const styles = {
     border: "1px solid rgba(232, 75, 75, 0.1)",
     borderRadius: "50%",
     pointerEvents: "none",
+    transition: "0.3s ease",
   },
 
   shapeOne: {
-    width: 250,
-    height: 250,
+    width: "20vw",
+    height: "20vw",
     top: "5%",
     right: "10%",
+    minWidth: 150,
+    minHeight: 150,
   },
 
   shapeTwo: {
-    width: 340,
-    height: 340,
+    width: "28vw",
+    height: "28vw",
     bottom: "8%",
     left: "8%",
+    minWidth: 180,
+    minHeight: 180,
   },
 
   shapeThree: {
-    width: 540,
-    height: 540,
+    width: "40vw",
+    height: "40vw",
     top: "-10%",
     left: "-10%",
     borderRadius: "20%",
+    minWidth: 280,
+    minHeight: 280,
   },
 };
