@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Verify from './screens/Verify'
 import ForgotPassword from './screens/ForgotPassword'
 import Contacts from './screens/Contacts'
-import LoadingScreen from './screens/loading' // ✅ corrected path
+import LoadingScreen from './screens/loading' 
+import HelpScreen from './screens/helpscreen'
+import Login from './screens/login'
 
 function App() {
   const [showLoading, setShowLoading] = useState(true)
@@ -14,12 +16,12 @@ function App() {
   }, [])
 
   return (
-    <Router>
+    <Router basename="/dev">
       {showLoading ? (
         <LoadingScreen />
       ) : (
         <Routes>
-          <Route path="/" element={<ForgotPassword />} />
+          <Route path="/" element={<Login />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ForgotPassword />} />

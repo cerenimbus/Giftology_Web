@@ -11,14 +11,14 @@ import { useNavigate } from "react-router-dom";
 import giftologyLogo from "./assets/giftology.png";
 
 // Icons for sidebar
-import {
-  DashboardIcon,
-  ReportsIcon,
-  CalendarIcon,
-  ContactsIcon,
-  HelpIcon,
-  FeedbackIcon,
-} from "../components/Icons";
+// import {
+//   DashboardIcon,
+//   ReportsIcon,
+//   CalendarIcon,
+//   ContactsIcon,
+//   HelpIcon,
+//   FeedbackIcon,
+// } from "../components/Icons";
 
 // This is the main function for the Help Screen
 export default function HelpScreen() {
@@ -116,13 +116,13 @@ function Sidebar({ navigate }) {
       <div style={styles.menuHeader}>Discover</div>
 
       {/* Menu items list */}
-      <MenuItem icon={<DashboardIcon size={16} />} text="Dashboard" />
-      <MenuItem icon={<ReportsIcon size={16} />} text="Reports" />
-      <MenuItem icon={<CalendarIcon size={16} />} text="Dates & DOV" />
-      <MenuItem icon={<ContactsIcon size={16} />} text="Contacts" />
-      <MenuItem icon={<HelpIcon size={16} color="#e84b4b" />} text="Help" active={true} />
+      <MenuItem text="Dashboard" />
+      <MenuItem text="Reports" />
+      <MenuItem text="Dates & DOV" />
+      <MenuItem text="Contacts" />
+      <MenuItem text="Help" active={true} />
       <MenuItem
-        icon={<FeedbackIcon size={16} />}
+        
         text="Feedback"
         onClick={() => navigate("/feedback")}
       />

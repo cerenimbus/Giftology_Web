@@ -8,9 +8,9 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthorizeUser } from '../api/index.js';
-import { setAuthCode, getAuthCode } from '../utils/storage.js';
-import { log } from '../utils/debug.js';
+// import { AuthorizeUser } from '../api/index.js';
+// import { setAuthCode, getAuthCode } from '../utils/storage.js';
+// import { log } from '../utils/debug.js';
 
 /** ✅ Giftology logo — perfected version (® baseline-aligned beside Y) */
 function GiftologyLogo({ width = 340 }) {
