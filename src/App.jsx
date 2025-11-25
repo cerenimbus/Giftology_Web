@@ -27,7 +27,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ForgotPassword />} />
           <Route path="/contacts" element={<Contacts />} />
-          <Route path="/help" element={<HelpScreen />} />
+          <Route path="/helpscreen" element={<HelpScreen />} />
           <Route path="/feedback" element={<Feedback />} />
         </Routes>
       )}

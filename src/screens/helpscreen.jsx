@@ -1,9 +1,9 @@
 /*
- * JA11/11/25
+ * 
  * src/screens/HelpScreen.jsx (web)
  * Giftology Relationship Radar - Help Screen
  * The layout is simple, with a Giftology logo and sample text paragraphs.
- * Euan Flores
+ * EF 11/12/25
  */
 
 import React, { useState, useEffect } from "react";
@@ -49,7 +49,7 @@ export default function HelpScreen() {
       {isDesktop && <Sidebar navigate={navigate} />}
 
       {/* Main content on the right side */}
-      <main style={{ ...styles.main, marginLeft: isDesktop ? 280 : 0 }}>
+      <main style={styles.main}>
         <h1 style={styles.title}>Help Screen</h1>
 
         {/* Section 1 */}
@@ -137,7 +137,7 @@ function MenuItem({ icon, text, onClick, active }) {
   // If the item is active (selected), change the style color
   if (active === true) {
     itemStyle.backgroundColor = "#fdf2f2";
-    itemStyle.borderLeft = "4px solid #e84b4b";
+    itemStyle.borderLeft = "0.25rem solid #e84b4b";
     itemStyle.color = "#e84b4b";
   }
 
@@ -158,78 +158,76 @@ const styles = {
   },
 
   sidebar: {
-    width: 280,
+    width: "17.5rem",
     backgroundColor: "#ffffff",
-    borderRight: "1px solid #eeeeee",
-    height: "100vh",
-    position: "fixed",
-    top: 0,
-    left: 0,
+    borderRight: "0.0625rem solid #eeeeee",
+    minHeight: "100vh",
+    position: "relative",
   },
 
   logoContainer: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 20,
-    paddingBottom: 20,
-    borderBottom: "1px solid #f0f0f0",
+    paddingTop: "1.25rem",
+    paddingBottom: "1.25rem",
+    borderBottom: "0.0625rem solid #f0f0f0",
   },
 
   logoImage: {
-    width: 160,
+    width: "10rem",
     height: "auto",
   },
 
   menuHeader: {
     color: "#999999",
-    paddingTop: 12,
-    paddingLeft: 20,
-    paddingBottom: 8,
-    fontSize: 13,
+    paddingTop: "0.75rem",
+    paddingLeft: "1.25rem",
+    paddingBottom: "0.5rem",
+    fontSize: "0.8125rem",
     textTransform: "uppercase",
   },
 
   menuItem: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
-    paddingTop: 10,
-    paddingBottom: 10,
-    paddingLeft: 20,
-    fontSize: 14,
+    gap: "0.625rem",
+    paddingTop: "0.625rem",
+    paddingBottom: "0.625rem",
+    paddingLeft: "1.25rem",
+    fontSize: "0.875rem",
     cursor: "pointer",
     color: "#333333",
   },
 
   main: {
     flex: 1,
-    paddingTop: 40,
-    paddingLeft: 60,
-    paddingRight: 60,
+    paddingTop: "2.5rem",
+    paddingLeft: "3.75rem",
+    paddingRight: "3.75rem",
     overflowY: "auto",
   },
 
   title: {
-    fontSize: 32,
+    fontSize: "2rem",
     fontWeight: 600,
     color: "#e84b4b",
-    marginBottom: 24,
+    marginBottom: "1.5rem",
   },
 
   subTitle: {
-    fontSize: 16,
+    fontSize: "1rem",
     fontWeight: 600,
-    marginBottom: 8,
+    marginBottom: "0.5rem",
   },
 
   text: {
-    fontSize: 15,
+    fontSize: "0.9375rem",
     color: "#333333",
     lineHeight: 1.6,
   },
 
   section: {
-    marginBottom: 32,
+    marginBottom: "2rem",
   },
 };
