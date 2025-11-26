@@ -1,116 +1,114 @@
 /*
- * JA11/10/25
- * src/screens/LoadingScreen.jsx (web)
- * Giftology Relationship Radar - Loading Screen
- * Responsive + Orientation Aware Version
- * Euan Flores 
- * MODIFIED KML 11/25/2025
+ * FINAL Loading Screen (Web)
+ * Matches exact layout from screenshot
+ * KML responsive loading screen update 11/25/25
+ * new update 11/26/25
  */
 
 import React, { useEffect, useState } from "react";
-import giftologyLogo from "./assets/giftology.png"; // logo image
 
-export default function LoadingScreen(props) {
+/* ------------------ Giftology SVG Logo Component ------------------ */
+function GiftologyLogo({ width = 350 }) {
+  const height = Math.round(width * 0.34);
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 1000 340"
+      role="img"
+      aria-label="GIFT·OLOGY"
+      style={{ display: "block" }}
+    >
+      {/* Brand red background */}
+      <rect x="0" y="0" width="1000" height="340" fill="#ef1f16" />
+
+      {/* White border */}
+      <rect
+        x="45"
+        y="45"
+        width="910"
+        height="250"
+        rx="10"
+        ry="10"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="7"
+      />
+
+      {/* Wordmark */}
+      <text
+        x="500"
+        y="195"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="#ffffff"
+        fontFamily="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+        fontWeight="700"
+        fontSize="130"
+        letterSpacing="8"
+      >
+        GIFT·OLOGY
+      </text>
+
+      {/* Registered ® symbol */}
+      <text
+        x="890"
+        y="225"
+        fill="#ffffff"
+        fontFamily="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+        fontWeight="700"
+        fontSize="35"
+      >
+        ®
+      </text>
+    </svg>
+  );
+}
+
+/* ------------------ MAIN LOADING SCREEN ------------------ */
+export default function LoadingScreen({ duration = 2500, onFinish }) {
   const [isVisible, setIsVisible] = useState(true);
 
-  // Auto-hide loading screen
   useEffect(() => {
-    const timeLimit = props.duration || 2500;
     const timer = setTimeout(() => {
       setIsVisible(false);
-      props.onFinish && props.onFinish();
-    }, timeLimit);
+      onFinish && onFinish();
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [props.duration, props.onFinish]);
+  }, [duration, onFinish]);
 
   if (!isVisible) return null;
 
   return (
     <div style={styles.page}>
-      {/* RESPONSIVE STYLES + ORIENTATION SUPPORT */}
       <style>
         {`
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
-
-          /* ----------- ORIENTATION SUPPORT ----------- */
-
-          /* Portrait Mode (Phone & Tablet) */
-          @media (orientation: portrait) {
-            .giftology-logo {
-              width: 60vw !important;
-              max-width: 280px !important;
-            }
-            .radar-title {
-              font-size: 6vw !important;
-            }
-            .powered-by {
-              font-size: 3.5vw !important;
-            }
-          }
-
-          /* Landscape Mode (Phone & Tablet) */
-          @media (orientation: landscape) {
-            .giftology-logo {
-              width: 35vw !important;
-              max-width: 260px !important;
-            }
-            .radar-title {
-              font-size: 4vw !important;
-            }
-            .powered-by {
-              font-size: 2vw !important;
-            }
-          }
-
-          /* ----------- WIDTH BREAKPOINTS ----------- */
-
-          @media (max-width: 1024px) {
-            .giftology-logo { width: 320px !important; }
-            .radar-title { font-size: 32px !important; }
-            .powered-by { font-size: 16px !important; }
-          }
-
-          @media (max-width: 768px) {
-            .giftology-logo { width: 250px !important; }
-            .radar-title { font-size: 26px !important; }
-            .powered-by { font-size: 14px !important; }
-          }
-
-          @media (max-width: 480px) {
-            .giftology-logo { width: 200px !important; }
-            .radar-title { font-size: 22px !important; }
-            .powered-by { font-size: 13px !important; }
-          }
         `}
       </style>
 
-      {/* MAIN CONTENT */}
-      <div style={styles.content}>
-        <div style={styles.textArea}>
-          <h1 className="radar-title" style={styles.radarTitle}>
-            Relationship Radar
-          </h1>
-          <p className="powered-by" style={styles.poweredBy}>
-            Powered by:
-          </p>
+      {/* CENTER CONTAINER */}
+      <div style={styles.centerBox}>
+
+        {/* Left-aligned Text */}
+        <div style={styles.textBlock}>
+          <div style={styles.relationTitle}>Relationship Radar</div>
+          <div style={styles.powered}>Powered by:</div>
         </div>
 
-        <img
-          src={giftologyLogo}
-          alt="Giftology Logo"
-          className="giftology-logo"
-          style={styles.logo}
-        />
+        {/* Giftology Logo */}
+        <GiftologyLogo width={350} />
 
-        {/* SPINNER */}
-        <div className="loading-spinner" style={styles.spinner}></div>
+        {/* Spinner */}
+        <div style={styles.spinner} />
       </div>
 
-      {/* DECORATIVE SHAPES */}
+      {/* Decorative Shapes */}
       <div style={{ ...styles.shape, ...styles.shapeOne }}></div>
       <div style={{ ...styles.shape, ...styles.shapeTwo }}></div>
       <div style={{ ...styles.shape, ...styles.shapeThree }}></div>
@@ -118,59 +116,44 @@ export default function LoadingScreen(props) {
   );
 }
 
-// ---------------- STYLES ----------------
-
+/* ------------------ STYLES ------------------ */
 const styles = {
   page: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    height: "100vh",
     width: "100%",
+    height: "100vh",
     overflow: "hidden",
     position: "relative",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif",
+    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   },
 
-  content: {
-    textAlign: "left",
-    maxWidth: "650px",
-    width: "90vw",
+  centerBox: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center", // keeps logo centered
     zIndex: 10,
   },
 
-  textArea: {
-    marginBottom: 20,
-    marginLeft: 10,
+  textBlock: {
+    width: "350px", // matches logo width
+    textAlign: "left",
+    marginBottom: 10,
   },
 
-  radarTitle: {
-    fontSize: 36,
-    fontWeight: 400,
-    color: "#000000",
-    marginBottom: 5,
-    lineHeight: 1.2,
-    transition: "0.3s ease",
-  },
-
-  poweredBy: {
+  relationTitle: {
     fontSize: 18,
-    color: "#555555",
-    marginBottom: 16,
-    transition: "0.3s ease",
+    fontWeight: 500,
+    color: "#111",
+    marginBottom: 4,
   },
 
-  logo: {
-    width: 380,
-    height: "auto",
-    marginLeft: 10,
-    marginBottom: 36,
-    objectFit: "contain",
-    borderRadius: 8,
-    boxShadow: "0 5px 15px rgba(0,0,0,0.18)",
-    transition: "width 0.3s ease",
+  powered: {
+    fontSize: 13,
+    color: "#444",
+    marginBottom: 12,
   },
 
   spinner: {
@@ -180,15 +163,15 @@ const styles = {
     borderTopColor: "#e84b4b",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
-    margin: "0 auto",
+    marginTop: 30,
   },
 
+  /* Decorative background circles */
   shape: {
     position: "absolute",
-    border: "1px solid rgba(232, 75, 75, 0.1)",
+    border: "1px solid rgba(232, 75, 75, 0.12)",
     borderRadius: "50%",
     pointerEvents: "none",
-    transition: "0.3s ease",
   },
 
   shapeOne: {
