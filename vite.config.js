@@ -13,4 +13,5 @@ export default defineConfig({
       },
     },
   },
+  base: '/dev/' // Set base path for hosting under /dev/
 })
