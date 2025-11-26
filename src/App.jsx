@@ -16,7 +16,8 @@ function App() {
   const [showLoading, setShowLoading] = useState(true)
 
   return (
-    <Router basename="/dev">
+    // use Vite's BASE_URL so local dev (/) and hosted /dev both work
+    <Router basename={import.meta.env.BASE_URL || '/'}>
       {showLoading ? (
         <LoadingScreen onFinish={() => setShowLoading(false)} />
       ) : (
