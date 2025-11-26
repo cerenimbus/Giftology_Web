@@ -36,6 +36,10 @@ export default function ForgotPassword() {
 
   return (
     <div className="forgot-password-page">
+      {/* Background Patterns */}
+      <div className="bg-pattern bg-pattern-top-left"></div>
+      <div className="bg-pattern bg-pattern-top-right"></div>
+      
       {/* Main Content */}
       <main className="forgot-password-content">
         {/* Relationship Radar Section */}
@@ -76,8 +80,6 @@ export default function ForgotPassword() {
       </main>
 
       {/* Background Patterns */}
-      <div className="bg-pattern bg-pattern-top-left"></div>
-      <div className="bg-pattern bg-pattern-top-right"></div>
       <div className="bg-pattern bg-pattern-bottom-left"></div>
       <div className="bg-pattern bg-pattern-bottom-right"></div>
     </div>

@@ -12,38 +12,36 @@
 
 /* Sidebar */
 .sidebar {
-  width: 250px;
+  width: clamp(15rem, 20vw, 18rem);
   background-color: #ffffff;
   border-right: 1px solid #f0f0f0;
   display: flex;
   flex-direction: column;
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
+  min-height: 100vh;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
   background-color: #e84b4b;
   color: #ffffff;
   font-weight: 700;
-  font-size: 20px;
-  padding: 20px;
+  font-size: 1.25rem;
+  padding: 1.25rem;
   text-align: center;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  letter-spacing: 1px;
+  letter-spacing: 0.06rem;
 }
 
 .sidebar-logo sup {
-  font-size: 10px;
+  font-size: 0.625rem;
   vertical-align: super;
-  margin-left: 2px;
+  margin-left: 0.125rem;
 }
 
 .nav-header {
-  padding: 16px 20px 8px 20px;
-  font-size: 12px;
+  padding: 1rem 1.25rem 0.5rem 1.25rem;
+  font-size: 0.75rem;
   color: #666666;
   font-weight: 600;
   text-transform: uppercase;
@@ -53,20 +51,20 @@
 .nav-menu {
   display: flex;
   flex-direction: column;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   color: #333333;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   transition: background-color 0.2s;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 15px;
+  font-size: 0.94rem;
 }
 
 .nav-item:hover {
@@ -95,24 +93,24 @@ a.nav-item[aria-current="page"] {
 /* Main Content */
 .contacts-content {
   flex: 1;
-  margin-left: 250px;
-  padding: 20px;
+  padding: clamp(1rem, 3vw, 2rem);
   background-color: #ffffff;
+  width: 100%;
 }
 
 .contacts-title {
-  font-size: 36px;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
   color: #e84b4b;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Contacts Table */
 .contacts-table {
   background-color: #ffffff;
-  border-radius: 12px;
-  padding: 8px;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   border: 1px solid #f0f0f0;
 }
@@ -120,13 +118,13 @@ a.nav-item[aria-current="page"] {
 .table-header {
   display: grid;
   grid-template-columns: 2fr 2fr 1.5fr;
-  gap: 12px;
-  padding: 12px 6px;
+  gap: 0.75rem;
+  padding: 0.75rem 0.375rem;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .header-cell {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #999999;
   font-weight: 500;
   text-align: left;
@@ -141,8 +139,8 @@ a.nav-item[aria-current="page"] {
 .table-row {
   display: grid;
   grid-template-columns: 2fr 2fr 1.5fr;
-  gap: 12px;
-  padding: 18px 6px;
+  gap: 0.75rem;
+  padding: 1.125rem 0.375rem;
   border-bottom: 1px solid #f0f0f0;
   transition: background-color 0.2s;
 }
@@ -156,7 +154,7 @@ a.nav-item[aria-current="page"] {
 }
 
 .table-cell {
-  font-size: 16px;
+  font-size: 1rem;
   color: #333333;
   text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -175,98 +173,244 @@ a.nav-item[aria-current="page"] {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .sidebar {
-    width: 200px;
+    width: clamp(12rem, 18vw, 15rem);
   }
 
   .contacts-content {
-    margin-left: 200px;
-    padding: 16px;
+    padding: 1rem;
   }
 
   .contacts-title {
-    font-size: 32px;
-    margin-bottom: 16px;
-  }
-
-  .table-header,
-  .table-row {
-    grid-template-columns: 2fr 1.5fr 1fr;
-    gap: 8px;
-  }
-
-  .table-cell {
-    font-size: 14px;
+    font-size: 2rem;
+    margin-bottom: 1rem;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  .contacts-page {
+    flex-direction: column !important;
+    display: flex !important;
+  }
+
   .sidebar {
-    width: 70px;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    border-right: none !important;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    overflow-y: visible;
+    flex-shrink: 0 !important;
   }
 
   .sidebar-logo {
-    font-size: 14px;
-    padding: 16px 8px;
+    font-size: 1rem;
+    padding: 1rem;
+    writing-mode: horizontal-tb !important;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255,255,255,0.3);
   }
 
-  .nav-header,
-  .nav-item span {
-    display: none;
+  .nav-header {
+    display: none !important;
+  }
+
+  .nav-menu {
+    display: flex !important;
+    flex-direction: row !important;
+    padding: 0.25rem 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    flex: 1;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 75, 75, 0.3) transparent;
+  }
+
+  .nav-menu::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .nav-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .nav-menu::-webkit-scrollbar-thumb {
+    background: rgba(232, 75, 75, 0.3);
+    border-radius: 10px;
+  }
+
+  .nav-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(232, 75, 75, 0.5);
   }
 
   .nav-item {
-    justify-content: center;
-    padding: 12px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.2rem;
+    padding: 0.5rem 0.65rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: auto !important;
+    font-size: 0.65rem;
+  }
+
+  .nav-item span {
+    font-size: 0.625rem !important;
+    display: block !important;
+    text-align: center;
+  }
+
+  .nav-icon {
+    width: 1.1rem !important;
+    height: 1.1rem !important;
   }
 
   .contacts-content {
-    margin-left: 70px;
-    padding: 12px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    flex: 1;
+    overflow-x: hidden;
   }
 
   .contacts-title {
-    font-size: 28px;
-    margin-bottom: 12px;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
   }
 
-  .table-header,
+  /* Hide table header on mobile */
+  .table-header {
+    display: none !important;
+  }
+
+  .table-body {
+    display: block;
+  }
+
+  /* Convert table rows to card layout */
   .table-row {
-    grid-template-columns: 1fr;
-    gap: 4px;
+    display: block !important;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #f0f0f0;
+    margin-bottom: 0.75rem;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
 
-  .header-cell {
-    display: none;
+  .table-row:hover {
+    background-color: #fafafa;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   }
 
-  .table-row {
-    flex-direction: column;
-    padding: 12px;
-    border-bottom: 1px solid #f0f0f0;
+  .table-row:last-child {
+    margin-bottom: 0;
   }
 
   .table-cell {
-    padding: 4px 0;
+    display: block !important;
+    padding: 0.4rem 0;
+    font-size: 0.94rem;
+    text-align: left !important;
+  }
+
+  .cell-name {
+    font-size: 1.06rem;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 0.25rem;
+  }
+
+  .cell-status {
+    color: #666666;
+    font-size: 0.875rem;
+  }
+
+  .cell-phone {
+    color: #999999;
+    font-size: 0.875rem;
   }
 
   .cell-name::before {
     content: 'Name: ';
-    font-weight: 600;
+    font-weight: 500;
     color: #999;
+    font-size: 0.75rem;
+    display: block;
   }
 
   .cell-status::before {
     content: 'Status: ';
-    font-weight: 600;
+    font-weight: 500;
     color: #999;
+    font-size: 0.75rem;
+    display: block;
   }
 
   .cell-phone::before {
     content: 'Phone: ';
-    font-weight: 600;
+    font-weight: 500;
     color: #999;
+    font-size: 0.75rem;
+    display: block;
+  }
+
+  .contacts-table {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-logo {
+    font-size: 0.75rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .nav-item {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .nav-item span {
+    font-size: 0.625rem;
+  }
+
+  .contacts-content {
+    padding: 0.75rem;
+  }
+
+  .contacts-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .table-row {
+    padding: 0.875rem;
+  }
+
+  .cell-name {
+    font-size: 1rem;
+  }
+
+  .cell-status,
+  .cell-phone {
+    font-size: 0.8125rem;
   }
 }
 

@@ -16,7 +16,7 @@ function App() {
   const [showLoading, setShowLoading] = useState(true)
 
   return (
-    <Router>
+    <Router basename="/dev">
       {showLoading ? (
         <LoadingScreen onFinish={() => setShowLoading(false)} />
       ) : (
