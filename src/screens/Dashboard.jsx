@@ -13,10 +13,40 @@ import {
   HelpIcon,
   FeedbackIcon,
 } from "../components/Icons";
+import { GetDashboard } from '../utils/api'
+
+// layout helpers
+function getCols(width = 1200) {
+  if (width < 640) return 1
+  if (width < 1024) return 2
+  return 3
+}
+
+const menuItems = [
+  { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon size={16} color='#e84b4b'/> },
+  { key: 'tasks', label: 'Tasks', path: '/tasks', icon: <DashboardIcon size={16}/> },
+  { key: 'dov', label: 'DOV & Dates', path: '/dov', icon: <CalendarIcon size={16}/> },
+  { key: 'partners', label: 'Potential Partners', path: '/contacts', icon: <ContactsIcon size={16}/> },
+  { key: 'reports', label: 'Reports', path: '/reports', icon: <ReportsIcon size={16}/> },
+  { key: 'help', label: 'Help', path: '/help', icon: <HelpIcon size={16}/> },
+  { key: 'feedback', label: 'Feedback', path: '/feedback', icon: <FeedbackIcon size={16}/> },
+]
+
+// mobile styles
+const mobileHeader = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: '#fff', borderBottom: '1px solid #f0f0f0' }
+const hamburgerButton = { padding: 8, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer' }
+const hamburgerLine = { height: 3, width: 22, background: '#333', margin: '3px 0', borderRadius: 2 }
+const mobileMenuOverlay = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 60 }
+const mobileMenuInner = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 260, background: '#fff', borderRadius: '0 10px 10px 0', boxShadow: '0 10px 30px rgba(0,0,0,0.12)', padding: 12 }
+const mobileMenuItem = { padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', borderRadius: 8 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const [showMenu, setShowMenu] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [cols, setCols] = useState(getCols(window.innerWidth));
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -24,8 +54,33 @@ export default function Dashboard() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // mock data (same as design)
-  const d = {
+  useEffect(() => {
+    const handle = () => setCols(getCols(window.innerWidth));
+    window.addEventListener('resize', handle);
+    return () => window.removeEventListener('resize', handle);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true
+    async function load() {
+      setLoading(true)
+      try {
+        const r = await GetDashboard()
+        if (mounted && r?.success) {
+          setData(r.data)
+        }
+      } catch (e) {
+        console.error('GetDashboard error', e)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [])
+
+  // temporary mock while loading; real data fetched from API
+  const d = data || {
     bestReferralPartners: [
       { name: "Jack Miller", amount: "$36,000" },
       { name: "Jhon de rosa", amount: "$22,425" },
@@ -70,6 +125,22 @@ export default function Dashboard() {
   };
 
   const safe = (v) => (v !== undefined && v !== null ? v : 0);
+
+  const toNumber = (v) => {
+    if (v === undefined || v === null) return 0
+    // allow strings like "1,000" or numbers
+    try {
+      const s = String(v).replace(/[^0-9.-]+/g, '')
+      return Number(s) || 0
+    } catch (e) { return 0 }
+  }
+
+  const formatNumber = (v) => toNumber(v).toLocaleString()
+  const formatCurrency = (v) => {
+    const n = toNumber(v)
+    if (n === 0) return '$0'
+    return `$${n.toLocaleString()}`
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#fafafa" }}>
@@ -124,19 +195,19 @@ export default function Dashboard() {
             <DashboardIcon size={16} color="#e84b4b" />
             <span style={{ fontSize: 14 }}>Dashboard</span>
           </div>
-          <div style={sideItem}>
+          <div style={sideItem} onClick={() => navigate('/reports')}>
             <ReportsIcon size={16} color="#333" />
             <span style={{ fontSize: 14 }}>Reports</span>
           </div>
-          <div style={sideItem}>
+          <div style={sideItem} onClick={() => navigate('/dov')}>
             <CalendarIcon size={16} color="#333" />
             <span style={{ fontSize: 14 }}>Dates & DOV</span>
           </div>
-          <div style={sideItem}>
+          <div style={sideItem} onClick={() => navigate('/contacts')}>
             <ContactsIcon size={16} color="#333" />
             <span style={{ fontSize: 14 }}>Contacts</span>
           </div>
-          <div style={sideItem}>
+          <div style={sideItem} onClick={() => navigate('/help')}>
             <HelpIcon size={16} color="#333" />
             <span style={{ fontSize: 14 }}>Help</span>
           </div>
@@ -148,53 +219,102 @@ export default function Dashboard() {
       )}
 
       {/* Main */}
+      {!isDesktop && (
+        <header style={mobileHeader}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontWeight: 700, color: '#e84b4b' }}>GIFT·OLOGY</div>
+            <div style={{ color: '#999' }}>Relationship Radar</div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              aria-label="Open menu"
+              onClick={() => setShowMenu((s) => !s)}
+              style={hamburgerButton}
+            >
+              <div style={hamburgerLine} />
+              <div style={hamburgerLine} />
+              <div style={hamburgerLine} />
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* Mobile overlay menu */}
+      {!isDesktop && showMenu && (
+        <nav style={mobileMenuOverlay} onClick={() => setShowMenu(false)}>
+            <div style={mobileMenuInner} onClick={(e) => e.stopPropagation()}>
+              <div style={{ padding: 12 }}>
+                <div style={{ backgroundColor: '#e84b4b', padding: 8, borderRadius: 4, marginBottom: 12 }}>
+                  <div style={{ border: '1.6px solid #fff', borderRadius: 2, padding: 12, textAlign: 'center', fontWeight: 700, color: '#fff', fontSize: 18 }}>GIFT·OLOGY<sub style={{ fontSize: 8, verticalAlign: '0.01em' }}>®</sub></div>
+                </div>
+                <div style={{ color: '#999', padding: '0 4px 8px', fontSize: 13 }}>Discover</div>
+              </div>
+
+              {menuItems.map((m) => (
+                <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', cursor: 'pointer', borderRadius: 8 }} onClick={() => { setShowMenu(false); navigate(m.path); }}>
+                  {m.icon}
+                  <span style={{ marginLeft: 8 }}>{m.label}</span>
+                </div>
+              ))}
+            </div>
+        </nav>
+      )}
       <main
         style={{
           flex: 1,
-          padding: 40,
+          padding: isDesktop ? 40 : 16,
           marginLeft: isDesktop ? 280 : 0,
           width: "100%",
+          boxSizing: 'border-box'
         }}
       >
+        {/* center the inner content while preserving the left offset for the fixed sidebar */}
+        <div style={{ maxWidth: 1180, margin: '0 auto', width: '100%' }}>
+        {loading && (
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 64, display: 'flex', justifyContent: 'center', zIndex: 40 }}>
+            <div style={{ background: '#fff', padding: '6px 12px', borderRadius: 999, boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>Loading dashboard…</div>
+          </div>
+        )}
         <h1 style={{ fontSize: 36, color: "#e84b4b", fontWeight: 700 }}>Dashboard</h1>
 
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gap: 24,
           }}
         >
           {/* Cards */}
-          <Card title="Best Referral Partners">
-            {d.bestReferralPartners.map((x, i) => (
-              <Row key={i} left={x.name} right={x.amount} />
+          <Card title="Best Referral Partners" isDesktop={isDesktop}>
+            {d.bestReferralPartners.slice(0,4).map((x, i) => (
+              <Row key={i} left={x.name} right={formatCurrency(x.amount)} />
             ))}
           </Card>
 
-          <Card title="Current Runaway Relationships">
-            {d.currentRunawayRelationships.map((x, i) => (
+          <Card title="Current Runaway Relationships" isDesktop={isDesktop}>
+            {d.currentRunawayRelationships.slice(0,4).map((x, i) => (
               <Row key={i} left={x.name} right={x.phone} rightColor="#999" />
             ))}
           </Card>
 
-          <Card title="Task">
-            {d.tasks.map((t, i) => (
-              <div
-                key={i}
-                style={{ display: "flex", gap: 8, padding: "6px 0", alignItems: "center" }}
-              >
-                <input type="checkbox" />
-                <span>
-                  {t.name} {t.type}
-                </span>
-                <span style={{ marginLeft: "auto", color: "#999" }}>{t.date}</span>
-              </div>
-            ))}
+          <Card title="Task" onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} isDesktop={isDesktop}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {d.tasks.map((t, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderRadius: 6, backgroundColor: '#fff0f0' }}>
+                  <input type="checkbox" style={{ marginRight: 12 }} disabled />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
+                    <div style={{ color: '#666', fontSize: 13 }}>{t.taskName || t.type || ''} · {t.date}</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ marginTop: 12, textAlign: 'center', color: '#e84b4b', fontWeight: 600 }}>Open Tasks</div>
+            </div>
           </Card>
 
           {/* Dates & DOV */}
-          <Card title="Dates & DOV" span={2}>
+          <Card title="Dates & DOV" span={2} isDesktop={isDesktop}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <div />
               <select
@@ -220,16 +340,16 @@ export default function Dashboard() {
               </select>
             </div>
 
-            <div style={{ display: "flex", gap: 12, marginBottom: 20, marginTop: 12 }}>
-              <Pill label="Harmless Starters" value={d.datesDov.harmlessStarters} />
-              <Pill label="Greenlight Questions" value={d.datesDov.greenlightQuestions} />
-              <Pill label="Clarity Convos" value={d.datesDov.clarityConvos} />
+            <div style={{ display: "flex", gap: 12, marginBottom: 20, marginTop: 12, flexWrap: 'wrap' }}>
+              <Pill label="Harmless Starters" value={formatNumber(d.datesDov.harmlessStarters)} />
+              <Pill label="Greenlight Questions" value={formatNumber(d.datesDov.greenlightQuestions)} />
+              <Pill label="Clarity Convos" value={formatNumber(d.datesDov.clarityConvos)} />
             </div>
 
-            <Row left="Handwritten Notes" right={safe(d.datesDov.handwrittenNotes).toLocaleString()} />
-            <Row left="Gifting" right={safe(d.datesDov.gifting).toLocaleString()} />
-            <Row left="Videos" right={safe(d.datesDov.videos).toLocaleString()} />
-            <Row left="Other" right={safe(d.datesDov.other).toLocaleString()} />
+            <Row left="Handwritten Notes" right={formatNumber(d.datesDov.handwrittenNotes)} />
+            <Row left="Gifting" right={formatNumber(d.datesDov.gifting)} />
+            <Row left="Videos" right={formatNumber(d.datesDov.videos)} />
+            <Row left="Other" right={formatNumber(d.datesDov.other)} />
 
             <div
               style={{
@@ -255,23 +375,23 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div style={{ fontSize: 36, color: "#999", fontWeight: 700, whiteSpace: "nowrap", marginTop: 16 }}>
-                  {safe(d.datesDov.totalDov).toLocaleString()}
+                  {formatNumber(d.datesDov.totalDov)}
                 </div>
               </div>
             </div>
           </Card>
 
-          <Card title="Recently Identified Potential Partners">
+          <Card title="Recently Identified Potential Partners" isDesktop={isDesktop}>
             {d.recentlyIdentifiedPartners.map((x, i) => (
               <Row key={i} left={x.name} right={x.phone} rightColor="#999" />
             ))}
           </Card>
 
-          <Card title="Outcomes" span={3}>
-            <div style={{ display: "flex", gap: 12 }}>
-              <Mini title="Introductions" value={d.outcomes.introductions} />
-              <Mini title="Referrals" value={d.outcomes.referrals} />
-              <Mini title="Referral Partners" value={d.outcomes.referralPartners} />
+          <Card title="Outcomes" span={3} isDesktop={isDesktop}>
+            <div style={{ display: "flex", gap: 12, flexWrap: 'wrap' }}>
+              <Mini title="Introductions" value={formatNumber(d.outcomes.introductions)} />
+              <Mini title="Referrals" value={formatNumber(d.outcomes.referrals)} />
+              <Mini title="Referral Partners" value={formatNumber(d.outcomes.referralPartners)} />
             </div>
             <h3 style={{ marginTop: 30, marginBottom: 16 }}>Referral Revenue Generated</h3>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
@@ -289,10 +409,11 @@ export default function Dashboard() {
                 </svg>
               </div>
               <div style={{ fontSize: 36, color: "#999", fontWeight: 700, whiteSpace: "nowrap", marginTop: 16 }}>
-                ${safe(d.referralRevenue).toLocaleString()}
+                {formatCurrency(d.referralRevenue)}
               </div>
             </div>
           </Card>
+        </div>
         </div>
       </main>
     </div>
@@ -300,16 +421,20 @@ export default function Dashboard() {
 }
 
 /* ---------- Reusable helpers ---------- */
-function Card({ title, children, span = 1 }) {
+function Card({ title, children, span = 1, style = {}, onClick, isDesktop = true }) {
+  const basePadding = isDesktop ? 24 : 12
   return (
     <div
       style={{
         backgroundColor: "#fff",
         borderRadius: 14,
-        padding: 24,
+        padding: basePadding,
         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         gridColumn: `span ${span}`,
+        cursor: onClick ? 'pointer' : 'default',
+        ...style,
       }}
+      onClick={onClick}
     >
       <h3 style={{ marginTop: 0, marginBottom: 16, fontSize: 16, fontWeight: 700 }}>{title}</h3>
       {children}

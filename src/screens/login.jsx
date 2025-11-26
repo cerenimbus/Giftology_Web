@@ -8,9 +8,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthorizeUser } from '../api/index.js';
+import { AuthorizeUser } from '../utils/api';
 import { setAuthCode, getAuthCode } from '../utils/storage.js';
-import { log } from '../utils/debug.js';
 
 /** ✅ Giftology logo — perfected version (® baseline-aligned beside Y) */
 function GiftologyLogo({ width = 340 }) {
@@ -81,7 +80,7 @@ export default function Login() {
   useEffect(() => {
     (async () => {
       const code = await getAuthCode();
-      if (code) navigate('/main', { replace: true });
+      if (code) navigate('/dashboard', { replace: true });
     })();
   }, [navigate]);
 
@@ -89,7 +88,7 @@ export default function Login() {
     if (!termsChecked) return;
     setLoading(true);
     try {
-      log('Login: sign-in pressed', { email, termsChecked });
+      console.log('Login: sign-in pressed', { email, termsChecked });
       const res = await AuthorizeUser({
         UserName: email,
         Password: password,
