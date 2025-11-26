@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-<<<<<<< HEAD
   server: {
     // Proxy /RRService/* requests to the real API during development to avoid CORS
     proxy: {
@@ -15,7 +14,3 @@ export default defineConfig({
     },
   },
 })
-=======
-  base: '/dev/' 
-})
->>>>>>> e572cdf62a7bdc38f3a16128d22146777031016b
