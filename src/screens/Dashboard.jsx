@@ -57,21 +57,92 @@ export default function Dashboard() {
   useEffect(() => {
     let mounted = true
     async function load() {
+      console.log('[Dashboard] ========================================')
+      console.log('[Dashboard] 🚀 Starting Dashboard load...')
       setLoading(true)
       try {
+        console.log('[Dashboard] 📞 Calling GetDashboard API...')
         const r = await GetDashboard()
-        if (mounted && r?.success) setData(r.data)
+        console.log('[Dashboard] 📥 GetDashboard returned:', {
+          success: r?.success,
+          hasData: !!r?.data,
+          errorNumber: r?.errorNumber,
+          message: r?.message,
+        })
+        
+        if (mounted) {
+          if (r?.success && r?.data) {
+            console.log('[Dashboard] ✅ API Response Success!')
+            console.log('[Dashboard] Full Response Data:', r.data)
+            console.log('[Dashboard] Dates & DOV:', r.data.datesDov)
+            console.log('[Dashboard] Outcomes:', r.data.outcomes)
+            console.log('[Dashboard] Referral Revenue:', r.data.referralRevenue)
+            console.log('[Dashboard] Best Partners Count:', r.data.bestReferralPartners?.length || 0)
+            console.log('[Dashboard] Current Relationships Count:', r.data.currentRunawayRelationships?.length || 0)
+            console.log('[Dashboard] Recent Partners Count:', r.data.recentlyIdentifiedPartners?.length || 0)
+            console.log('[Dashboard] Tasks Count:', r.data.tasks?.length || 0)
+            setData(r.data)
+            console.log('[Dashboard] ✅ Data set successfully!')
+          } else {
+            console.warn('[Dashboard] ❌ GetDashboard failed!')
+            console.warn('[Dashboard] Error Details:', {
+              message: r?.message || 'Unknown error',
+              errorNumber: r?.errorNumber,
+              success: r?.success,
+              hasData: !!r?.data,
+              fullResponse: r,
+            })
+          }
+        } else {
+          console.log('[Dashboard] ⚠️ Component unmounted, skipping data update')
+        }
       } catch (err) {
-        console.warn('GetDashboard failed', err)
+        console.error('[Dashboard] ❌ GetDashboard exception!')
+        console.error('[Dashboard] Error:', err)
+        console.error('[Dashboard] Error stack:', err?.stack)
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) {
+          setLoading(false)
+          console.log('[Dashboard] ✅ Loading complete')
+        }
+        console.log('[Dashboard] ========================================')
       }
     }
     load()
-    return () => { mounted = false }
+    return () => { 
+      console.log('[Dashboard] 🧹 Cleanup: Component unmounting')
+      mounted = false 
+    }
   }, [])
 
-  const d = data || {
+  // Use API data if available, otherwise use fallback
+  // Match mobile Dashboard structure exactly
+  const d = data ? {
+    // Web-specific names (for backward compatibility)
+    bestReferralPartners: data.bestReferralPartners || [],
+    currentRunawayRelationships: data.currentRunawayRelationships || [],
+    tasks: data.tasks || [],
+    recentlyIdentifiedPartners: data.recentlyIdentifiedPartners || [],
+    datesDov: data.datesDov || {
+      harmlessStarters: 0,
+      greenlightQuestions: 0,
+      clarityConvos: 0,
+      handwrittenNotes: 0,
+      gifting: 0,
+      videos: 0,
+      other: 0,
+      totalDov: 0,
+    },
+    // Mobile-compatible structure (matching mobile Dashboard)
+    dovTotal: data.dovTotal || data.datesDov?.totalDov || 0,
+    outcomes: {
+      introductions: data.outcomes?.introductions || 0,
+      referrals: data.outcomes?.referrals || 0,
+      referralPartners: data.outcomes?.referralPartners || data.outcomes?.partners || 0,
+      partners: data.outcomes?.partners || data.outcomes?.referralPartners || 0, // Mobile uses 'partners'
+    },
+    referralRevenue: data.referralRevenue || 0,
+  } : {
     bestReferralPartners: [
       { name: 'Jack Miller', amount: '$36,000' },
       { name: 'Jhon de rosa', amount: '$22,425' },
@@ -100,12 +171,13 @@ export default function Dashboard() {
       other: 0,
       totalDov: 0,
     },
+    dovTotal: 0, // Mobile-compatible
     recentlyIdentifiedPartners: [
       { name: 'Charly Oman', phone: '(225) 555-0118' },
       { name: 'Jhon de rosa', phone: '(225) 555-0118' },
       { name: 'Martin Mayers', phone: '(225) 555-0118' },
     ],
-    outcomes: { introductions: 0, referrals: 0, referralPartners: 0 },
+    outcomes: { introductions: 0, referrals: 0, referralPartners: 0, partners: 0 }, // Mobile uses 'partners'
     referralRevenue: 0,
   }
 
@@ -238,36 +310,20 @@ export default function Dashboard() {
             </Card>
 
             <Card title='Dates & DOV' span={2} isDesktop={isDesktop}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div />
-                <select style={{ border: '1px solid #e0e0e0', backgroundColor: '#fff', padding: '8px 32px 8px 12px', borderRadius: 6, cursor: 'pointer', color: '#333', fontSize: 14, fontFamily: 'inherit', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', outline: 'none' }}>
-                  <option>Months</option>
-                  <option>Weeks</option>
-                  <option>Days</option>
-                </select>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                <Pill label='Total DOV' value={formatNumber(d.dovTotal || d.datesDov?.totalDov || 0)} />
+                <Pill label='Introductions' value={formatNumber(d.outcomes.introductions)} />
+                <Pill label='Referrals' value={formatNumber(d.outcomes.referrals)} />
               </div>
 
-              <div style={{ display: 'flex', gap: 12, marginBottom: 20, marginTop: 12, flexWrap: 'wrap' }}>
-                <Pill label='Harmless Starters' value={formatNumber(d.datesDov.harmlessStarters)} />
-                <Pill label='Greenlight Questions' value={formatNumber(d.datesDov.greenlightQuestions)} />
-                <Pill label='Clarity Convos' value={formatNumber(d.datesDov.clarityConvos)} />
-              </div>
-
-              <Row left='Handwritten Notes' right={formatNumber(d.datesDov.handwrittenNotes)} />
-              <Row left='Gifting' right={formatNumber(d.datesDov.gifting)} />
-              <Row left='Videos' right={formatNumber(d.datesDov.videos)} />
-              <Row left='Other' right={formatNumber(d.datesDov.other)} />
-
-              <div style={{ backgroundColor: '#fafafa', marginTop: 10, padding: 20, borderRadius: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, marginBottom: 16, fontSize: 15 }}>Total DOV Activities</div>
-                    <svg width='100%' height='120' viewBox='0 0 400 120' preserveAspectRatio='none' style={{ display: 'block', minHeight: '120px' }}>
-                      <path d='M 0 105 C 8 102, 15 98, 22 100 C 29 102, 35 99, 42 101 C 55 105, 68 90, 85 70 C 95 55, 105 45, 115 50 C 125 55, 135 65, 145 70 C 155 75, 165 80, 175 88 C 185 96, 192 105, 200 110 C 208 115, 215 112, 225 105 C 235 98, 242 85, 250 70 C 258 55, 262 45, 265 35 C 268 25, 270 20, 275 25 C 280 30, 285 40, 290 50 C 293 56, 296 60, 298 55 C 300 50, 303 40, 308 30 C 313 23, 318 20, 325 22 C 332 24, 340 25, 350 25 C 360 25, 370 25, 380 25 C 390 25, 400 25, 400 25' fill='none' stroke='#e84b4b' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' />
-                    </svg>
-                  </div>
-                  <div style={{ fontSize: 36, color: '#999', fontWeight: 700, whiteSpace: 'nowrap', marginTop: 16 }}>{formatNumber(d.datesDov.totalDov)}</div>
+              <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 16, color: '#333' }}>Total DOV Activities</div>
+              <div style={{ backgroundColor: '#fafafa', padding: 20, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <svg width='100%' height='120' viewBox='0 0 400 120' preserveAspectRatio='none' style={{ display: 'block', minHeight: '120px' }}>
+                    <path d='M 0 105 C 8 102, 15 98, 22 100 C 29 102, 35 99, 42 101 C 55 105, 68 90, 85 70 C 95 55, 105 45, 115 50 C 125 55, 135 65, 145 70 C 155 75, 165 80, 175 88 C 185 96, 192 105, 200 110 C 208 115, 215 112, 225 105 C 235 98, 242 85, 250 70 C 258 55, 262 45, 265 35 C 268 25, 270 20, 275 25 C 280 30, 285 40, 290 50 C 293 56, 296 60, 298 55 C 300 50, 303 40, 308 30 C 313 23, 318 20, 325 22 C 332 24, 340 25, 350 25 C 360 25, 370 25, 380 25 C 390 25, 400 25, 400 25' fill='none' stroke='#e84b4b' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' />
+                  </svg>
                 </div>
+                <div style={{ fontSize: 36, color: '#999', fontWeight: 700, whiteSpace: 'nowrap', marginTop: 16 }}>{formatNumber(d.dovTotal || d.datesDov?.totalDov || 0)}</div>
               </div>
             </Card>
 
@@ -279,7 +335,7 @@ export default function Dashboard() {
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <Mini title='Introductions' value={formatNumber(d.outcomes.introductions)} />
                 <Mini title='Referrals' value={formatNumber(d.outcomes.referrals)} />
-                <Mini title='Referral Partners' value={formatNumber(d.outcomes.referralPartners)} />
+                <Mini title='Referral Partners' value={formatNumber(d.outcomes.partners || d.outcomes.referralPartners)} />
               </div>
 
               <h3 style={{ marginTop: 30, marginBottom: 16 }}>Referral Revenue Generated</h3>
