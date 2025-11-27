@@ -89,9 +89,12 @@ export async function fetchWithTimeout(url, options = {}, timeout = 15000) {
 // central caller used by exported API functions
 // returns { success, errorNumber, message, raw, parsed, requestUrl }
 export async function callService(functionName, extraParams = {}, paramOrder = null) {
+  console.log(`[callService] Starting API call: ${functionName}`)
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' })
   const deviceId = (await getDeviceId()) || ''
   const ac = (await getAuthCode()) || ''
+
+  console.log(`[callService] DeviceID: ${deviceId ? 'present' : 'missing'}, AC: ${ac ? 'present' : 'missing'}`)
 
   const d = new Date()
   const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}-${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
@@ -102,6 +105,8 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
 
   const params = Object.assign({ DeviceID: deviceId, Date: dateStr, Key: key, AC: ac }, extraParams)
   const url = buildUrl(functionName, params, paramOrder)
+
+  console.log(`[callService] Request URL: ${url.replace(/([&?]AC=)[^&]*/, '$1***')}`)
 
   try {
     const debugOn = getDebugFlag && getDebugFlag()
@@ -115,18 +120,35 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
       log(`[RRService] Request URL (full):`, url)
     }
 
+    console.log(`[callService] Fetching from API...`)
     // Fetch with timeout
     const res = await fetchWithTimeout(url, {}, 30000)
+    console.log(`[callService] Response status: ${res.status} ${res.statusText}`)
+    
     const txt = await res.text()
+    console.log(`[callService] Response text length: ${txt.length} characters`)
+    console.log(`[callService] Full Response XML:`, txt)
 
     const obj = parser.parse(txt)
+    console.log(`[callService] Parsed XML object:`, obj)
+    
     const ri = obj?.ResultInfo || obj
     const err = Number(ri?.ErrorNumber) || 0
     const result = (ri?.Result || '').toLowerCase()
     const message = ri?.Message || ''
 
+    console.log(`[callService] Parsed result:`, {
+      success: result === 'success',
+      errorNumber: err,
+      message: message,
+      hasSelections: !!ri?.Selections,
+      selectionsType: typeof ri?.Selections,
+      selectionsKeys: ri?.Selections ? Object.keys(ri.Selections) : [],
+    })
+
     return { success: result === 'success', errorNumber: err, message, raw: ri, parsed: ri, requestUrl: url }
   } catch (e) {
+    console.error(`[callService] ❌ Error calling ${functionName}:`, e)
     const isTimeout = (e && (e.name === 'AbortError' || String(e).toLowerCase().includes('timeout')))
     if (getDebugFlag && getDebugFlag()) logError && logError(`[RRService] Error calling ${functionName}:`, e && e.stack ? e.stack : e)
     if (isTimeout) {
@@ -174,33 +196,132 @@ export async function AuthorizeDeviceID({ SecurityCode }) {
   return callService('AuthorizeDeviceID', { SecurityCode })
 }
 
+// Helper to parse formatted numbers (removes commas, spaces, currency symbols, etc.)
+function parseFormattedNumber(str) {
+  if (!str) return 0
+  const cleaned = String(str).replace(/[^0-9.-]+/g, '')
+  const num = Number(cleaned)
+  return isNaN(num) ? 0 : num
+}
+
 export async function GetDashboard() {
   const r = await callService('GetDashboard')
-  if (!r.success) return r
+  if (!r.success) {
+    console.log('[GetDashboard] API call failed:', r)
+    return r
+  }
 
   const sel = r.parsed?.Selections || {}
 
-  // Map a compact JS object expected by UI
+  // Helper to recursively search for DOV fields in nested Task structure
+  const findDovFields = (obj, depth = 0) => {
+    if (!obj || typeof obj !== 'object' || depth > 10) return null
+    
+    // Check if this object has the DOV fields we're looking for
+    if (obj.HarmlessStarter !== undefined || obj.Greenlight !== undefined || obj.TotalDOV !== undefined) {
+      return obj
+    }
+    
+    // Recursively search in nested objects
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null) {
+        const found = findDovFields(obj[key], depth + 1)
+        if (found) return found
+      }
+    }
+    
+    return null
+  }
+
+  // Find DOV fields in the nested Task structure
+  const dovFields = findDovFields(sel?.Task) || {}
+
+  // Parse DOV array to extract additional DOV types (if needed)
+  const dovMap = {}
+  const dovSources = []
+  if (sel?.DOV) dovSources.push(sel.DOV)
+  if (dovFields?.DOV) dovSources.push(dovFields.DOV)
+  
+  dovSources.forEach(dovSource => {
+    const dovArray = Array.isArray(dovSource) ? dovSource : [dovSource]
+    dovArray.forEach(dov => {
+      const name = (textOf(dov?.Name) || '').toLowerCase().trim()
+      const count = parseFormattedNumber(textOf(dov?.Count))
+      if (name) {
+        if (name.includes('handwritten') || name.includes('note')) {
+          dovMap.handwrittenNotes = (dovMap.handwrittenNotes || 0) + count
+        } else if (name.includes('gift')) {
+          dovMap.gifting = (dovMap.gifting || 0) + count
+        } else if (name.includes('video')) {
+          dovMap.videos = (dovMap.videos || 0) + count
+        } else if (name.includes('other')) {
+          dovMap.other = (dovMap.other || 0) + count
+        }
+      }
+    })
+  })
+
+  // Helper to extract number from XML field (handles both direct numbers and textOf format)
+  const getNumber = (field) => {
+    if (field === undefined || field === null) return 0
+    // If it's already a number, use it directly
+    if (typeof field === 'number') return isNaN(field) ? 0 : field
+    // If it's a string, parse it
+    if (typeof field === 'string') {
+      const parsed = parseFormattedNumber(field)
+      return isNaN(parsed) ? 0 : parsed
+    }
+    // Otherwise use textOf to extract text, then parse
+    const text = textOf(field)
+    const parsed = parseFormattedNumber(text)
+    return isNaN(parsed) ? 0 : parsed
+  }
+
+  // Extract DOV fields from nested structure (they're inside Task.TaskName.TaskName.Task.TaskName)
+  // Try root level first, then nested structure
+  const harmLessStarter = getNumber(sel?.HarmlessStarter || dovFields?.HarmlessStarter)
+  const greenlight = getNumber(sel?.Greenlight || dovFields?.Greenlight)
+  const clarityConvos = getNumber(sel?.ClarityConvos || dovFields?.ClarityConvos)
+  const totalDov = getNumber(sel?.TotalDOV || sel?.TotalDov || dovFields?.TotalDOV || dovFields?.TotalDov)
+  const introduction = getNumber(sel?.Introduction || dovFields?.Introduction)
+  const referral = getNumber(sel?.Referral || dovFields?.Referral)
+  const partner = getNumber(sel?.Partner || dovFields?.Partner)
+  
+  // Map a compact JS object expected by UI (matching mobile structure)
   const data = {
+    // Web-specific property names (for backward compatibility)
     bestReferralPartners: Array.isArray(sel?.BestPartner) ? sel.BestPartner.map(b => ({ name: textOf(b?.Name), contactSerial: textOf(b?.ContactSerial), amount: textOf(b?.Amount) })) : (sel?.BestPartner ? [{ name: textOf(sel.BestPartner?.Name), contactSerial: textOf(sel.BestPartner?.ContactSerial), amount: textOf(sel.BestPartner?.Amount) }] : []),
     currentRunawayRelationships: Array.isArray(sel?.Current) ? sel.Current.map(c => ({ name: textOf(c?.Name), contactSerial: textOf(c?.ContactSerial), phone: textOf(c?.Phone) })) : (sel?.Current ? [{ name: textOf(sel.Current?.Name), contactSerial: textOf(sel.Current?.ContactSerial), phone: textOf(sel.Current?.Phone) }] : []),
     recentlyIdentifiedPartners: Array.isArray(sel?.Recent) ? sel.Recent.map(r => ({ name: textOf(r?.Name), contactSerial: textOf(r?.ContactSerial), phone: textOf(r?.Phone) })) : (sel?.Recent ? [{ name: textOf(sel.Recent?.Name), contactSerial: textOf(sel.Recent?.ContactSerial), phone: textOf(sel.Recent?.Phone) }] : []),
     tasks: Array.isArray(sel?.Task) ? sel.Task.map(t => ({ name: textOf(t?.Name) || textOf(t?.TaskName), taskSerial: textOf(t?.TaskSerial), contactSerial: textOf(t?.ContactSerial), taskName: textOf(t?.TaskName), date: textOf(t?.Date) })) : (sel?.Task ? [{ name: textOf(sel.Task?.Name) || textOf(sel.Task?.TaskName), taskSerial: textOf(sel.Task?.TaskSerial), contactSerial: textOf(sel.Task?.ContactSerial), taskName: textOf(sel.Task?.TaskName), date: textOf(sel.Task?.Date) }] : []),
+    
+    // Mobile-compatible property names
+    bestPartner: Array.isArray(sel?.BestPartner) ? sel.BestPartner.map(b => ({ Name: textOf(b?.Name), ContactSerial: textOf(b?.ContactSerial), Amount: textOf(b?.Amount) })) : (sel?.BestPartner ? [{ Name: textOf(sel.BestPartner?.Name), ContactSerial: textOf(sel.BestPartner?.ContactSerial), Amount: textOf(sel.BestPartner?.Amount) }] : []),
+    current: Array.isArray(sel?.Current) ? sel.Current.map(c => ({ Name: textOf(c?.Name), ContactSerial: textOf(c?.ContactSerial), Phone: textOf(c?.Phone) })) : (sel?.Current ? [{ Name: textOf(sel.Current?.Name), ContactSerial: textOf(sel.Current?.ContactSerial), Phone: textOf(sel.Current?.Phone) }] : []),
+    recent: Array.isArray(sel?.Recent) ? sel.Recent.map(r => ({ Name: textOf(r?.Name), ContactSerial: textOf(r?.ContactSerial), Phone: textOf(r?.Phone) })) : (sel?.Recent ? [{ Name: textOf(sel.Recent?.Name), ContactSerial: textOf(sel.Recent?.ContactSerial), Phone: textOf(sel.Recent?.Phone) }] : []),
+    tasksSummary: Array.isArray(sel?.Task) ? sel.Task.map(t => ({ name: textOf(t?.Name) || textOf(t?.TaskName), taskSerial: textOf(t?.TaskSerial), contactSerial: textOf(t?.ContactSerial), taskName: textOf(t?.TaskName), date: textOf(t?.Date) })) : (sel?.Task ? [{ name: textOf(sel.Task?.Name) || textOf(sel.Task?.TaskName), taskSerial: textOf(sel.Task?.TaskSerial), contactSerial: textOf(sel.Task?.ContactSerial), taskName: textOf(sel.Task?.TaskName), date: textOf(sel.Task?.Date) }] : []),
+    
+    // DOV data - extract from nested structure or root level
     datesDov: {
-      harmlessStarters: Number(textOf(sel?.HarmlessStarter)) || 0,
-      greenlightQuestions: Number(textOf(sel?.Greenlight)) || 0,
-      clarityConvos: Number(textOf(sel?.ClarityConvos)) || 0,
-      handwrittenNotes: Number(textOf(sel?.HandwrittenNotes)) || 0,
-      gifting: Number(textOf(sel?.Gifting)) || 0,
-      videos: Number(textOf(sel?.Videos)) || 0,
-      other: Number(textOf(sel?.Other)) || 0,
-      totalDov: Number(textOf(sel?.TotalDOV || sel?.TotalDov)) || 0,
+      harmlessStarters: harmLessStarter,
+      greenlightQuestions: greenlight,
+      clarityConvos: clarityConvos,
+      handwrittenNotes: getNumber(sel?.HandwrittenNotes || dovFields?.HandwrittenNotes) || dovMap.handwrittenNotes || 0,
+      gifting: getNumber(sel?.Gifting || dovFields?.Gifting) || dovMap.gifting || 0,
+      videos: getNumber(sel?.Videos || dovFields?.Videos) || dovMap.videos || 0,
+      other: getNumber(sel?.Other || dovFields?.Other) || dovMap.other || 0,
+      totalDov: totalDov,
     },
-    referralRevenue: Number(sel?.ReferralRevenue || sel?.ReferralRevenueGenerated || sel?.referralRevenue || 0),
+    // Mobile-compatible top-level dovTotal
+    dovTotal: totalDov,
+    
+    referralRevenue: getNumber(sel?.ReferralRevenue || sel?.ReferralRevenueGenerated || sel?.referralRevenue || dovFields?.ReferralRevenue || 0),
     outcomes: {
-      introductions: Number(textOf(sel?.Introduction)) || 0,
-      referrals: Number(textOf(sel?.Referral)) || 0,
-      referralPartners: Number(textOf(sel?.Partner)) || 0,
+      introductions: introduction,
+      referrals: referral,
+      referralPartners: partner,
+      // Mobile-compatible property name
+      partners: partner,
     },
   }
 
