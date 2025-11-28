@@ -16,8 +16,10 @@ import {
 import { GetDashboard } from '../utils/api'
 
 function getCols(width = 1200) {
-  if (width < 640) return 1
-  if (width < 900) return 2
+  // Mobile phones/tablets (<=900px): single column for better readability
+  if (width <= 900) return 1
+  // Small tablets / narrow desktops: two columns
+  if (width < 1200) return 2
   return 3
 }
 
@@ -285,31 +287,16 @@ export default function Dashboard() {
 
           <h1 style={{ fontSize: 36, color: '#e84b4b', fontWeight: 700 }}>Dashboard</h1>
 
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 24 }}>
-            <Card title='Best Referral Partners' isDesktop={isDesktop}>
+          <div className='dashboard-grid' style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 24 }}>
+            <Card title='Best Referral Partners' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               {d.bestReferralPartners.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.amount} />)}
             </Card>
 
-            <Card title='Current Runaway Relationships' isDesktop={isDesktop}>
+            <Card title='Current Runaway Relationships' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               {d.currentRunawayRelationships.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.phone} rightColor='#999' />)}
             </Card>
 
-            <Card title='Task' onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} isDesktop={isDesktop}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {d.tasks.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderRadius: 6, backgroundColor: '#fff0f0' }}>
-                    <input type='checkbox' style={{ marginRight: 12 }} disabled />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
-                      <div style={{ color: '#666', fontSize: 13 }}>{t.taskName || t.type || ''} · {t.date}</div>
-                    </div>
-                  </div>
-                ))}
-                <div style={{ marginTop: 12, textAlign: 'center', color: '#e84b4b', fontWeight: 600 }}>Open Tasks</div>
-              </div>
-            </Card>
-
-            <Card title='Dates & DOV' span={2} isDesktop={isDesktop}>
+            <Card title='Dates & DOV' span={cols === 1 ? 1 : 2} isDesktop={isDesktop}>
               <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
                 <Pill label='Total DOV' value={formatNumber(d.dovTotal || d.datesDov?.totalDov || 0)} />
                 <Pill label='Introductions' value={formatNumber(d.outcomes.introductions)} />
@@ -327,11 +314,26 @@ export default function Dashboard() {
               </div>
             </Card>
 
-            <Card title='Recently Identified Potential Partners' isDesktop={isDesktop}>
+            <Card title='Task' onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {d.tasks.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderRadius: 6, backgroundColor: '#fff0f0' }}>
+                    <input type='checkbox' style={{ marginRight: 12 }} disabled />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
+                      <div style={{ color: '#666', fontSize: 13 }}>{t.taskName || t.type || ''} · {t.date}</div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 12, textAlign: 'center', color: '#e84b4b', fontWeight: 600 }}>Open Tasks</div>
+              </div>
+            </Card>
+
+            <Card title='Recently Identified Potential Partners' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               {d.recentlyIdentifiedPartners.map((x, i) => <Row key={i} left={x.name} right={x.phone} rightColor='#999' />)}
             </Card>
 
-            <Card title='Outcomes' span={3} isDesktop={isDesktop}>
+            <Card title='Outcomes' span={cols === 1 ? 1 : 3} isDesktop={isDesktop}>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <Mini title='Introductions' value={formatNumber(d.outcomes.introductions)} />
                 <Mini title='Referrals' value={formatNumber(d.outcomes.referrals)} />

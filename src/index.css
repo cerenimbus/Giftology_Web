@@ -10,3 +10,10 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* dashboard grid: force single column on narrow phones (covers emulation & DPR cases) */
+@media (max-width: 480px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
