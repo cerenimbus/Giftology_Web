@@ -11,6 +11,7 @@ import Tasks from './screens/Tasks'
 import DOV from './screens/DOV'
 import Reports from './screens/Reports'
 import Feedback from './screens/Feedback'
+import Setup from './screens/Setup'
 
 function App() {
   const [showLoading, setShowLoading] = useState(true)
@@ -34,6 +35,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/help" element={<HelpScreen />} />
+          <Route path="/setup" element={<Setup />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}

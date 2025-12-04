@@ -11,6 +11,23 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/api/KEAP': {
+        target: 'https://radar.giftologygroup.com',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => {
+          // Remove /api/KEAP prefix and keep the rest
+          return path.replace(/^\/api\/KEAP/, '/api/KEAP');
+        },
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, res) => {
+            console.log('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Proxying request:', req.method, req.url, '->', proxyReq.path);
+          });
+        },
+      },
     },
   },
   base: '/dev/' // Set base path for hosting under /dev/

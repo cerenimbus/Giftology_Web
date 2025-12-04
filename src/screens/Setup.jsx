@@ -1,18 +1,13 @@
-/* JA10/31/25
- * src/screens/Feedback.jsx (web)
- */
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-export default function Feedback() {
+export default function Setup() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [comment, setComment] = useState('');
+  const subscriberSerial = 1; // HARDCODED VALUE
+
   const [loading, setLoading] = useState(false);
-  const [wantsResponse, setWantsResponse] = useState(false);
-  const [wantsUpdates, setWantsUpdates] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -21,40 +16,72 @@ export default function Feedback() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isValidEmail = (e) => {
-    if (!e) return false;
-    return /^.+@.+\..+$/.test(e);
-  };
+  // Automatically run setup when component mounts
+  useEffect(() => {
+    runSetup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const onSubmit = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!comment) return;
-    if (email && !isValidEmail(email)) {
-      window.alert('Invalid email: Must enter a validly formatted email');
-      return;
-    }
+  const runSetup = async () => {
     setLoading(true);
+    setResult(null);
+    setError(null);
+
     try {
-      // TODO: Implement UpdateFeedback API call
-      // const res = await UpdateFeedback({ Name: name, Email: email, Phone: phone, Comment: comment, Response: wantsResponse ? 1 : 0, Update: wantsUpdates ? 1 : 0 });
+      // Use proxy in development, direct URL in production
+      const apiUrl = import.meta.env.DEV 
+        ? '/api/KEAP/giftology_setup.php'
+        : 'https://radar.giftologygroup.com/api/KEAP/giftology_setup.php';
+
+      const response = await fetch(
+        apiUrl,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ subscriber_serial: subscriberSerial })
+        }
+      );
+
+      // Get response text first to check if it's JSON
+      const responseText = await response.text();
       
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Log the response for debugging
+      console.log('API Response Status:', response.status);
+      console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('API Response Text (first 500 chars):', responseText.substring(0, 500));
       
-      window.alert('Feedback submitted successfully!');
-      // Reset form
-      setName('');
-      setEmail('');
-      setPhone('');
-      setComment('');
-      setWantsResponse(false);
-      setWantsUpdates(false);
+      // Check if response is HTML (error page)
+      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+        // Try to extract error message from HTML if possible
+        const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
+        const errorMsg = titleMatch ? titleMatch[1] : 'Unknown error';
+        throw new Error(`Server returned an HTML page instead of JSON. Page title: "${errorMsg}". The API endpoint may not exist or the proxy configuration may be incorrect.`);
+      }
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 200)}`);
+      }
+
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed API Response:', data);
+        console.log('Created Tags:', data.created_tags);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response from server. Response: ${responseText.substring(0, 200)}`);
+      }
+
+      setResult(data);
     } catch (err) {
-      window.alert('Failed to submit feedback. Please try again.');
-      console.error('Feedback submission error:', err);
-    } finally { 
-      setLoading(false); 
+      const errorMessage = err.message || "Failed to run setup. Please try again.";
+      setError(errorMessage);
+      console.error('Setup error:', err);
     }
+
+    setLoading(false);
   };
 
   // All styles defined inside component to access isMobile
@@ -186,49 +213,51 @@ export default function Feedback() {
     },
     card: {
       backgroundColor: '#fff',
-      padding: '0.625rem',
+      padding: '1.5rem',
       marginTop: '0.625rem',
       borderRadius: '0.625rem',
       boxShadow: '0 0 0 0.0625rem #f0f0f0 inset',
     },
-    input: {
-      borderWidth: '0.0625rem',
-      borderColor: '#e6e6e6',
-      borderStyle: 'solid',
-      borderRadius: '0.625rem',
-      padding: '0.6875rem',
-      marginTop: '0.375rem',
-      width: '100%',
-      boxSizing: 'border-box',
-      fontFamily: 'inherit',
-      fontSize: '0.8125rem',
-    },
-    checkboxContainer: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: '0.625rem',
-    },
-    checkbox: {
-      marginRight: '0.375rem',
-      cursor: 'pointer',
-    },
-    label: {
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-      fontSize: '0.8125rem',
-    },
     button: {
       backgroundColor: '#e84b4b',
-      padding: '0.75rem',
+      padding: '0.75rem 1.5rem',
       border: 'none',
       borderRadius: '0.625rem',
       alignItems: 'center',
-      marginTop: '0.75rem',
+      marginTop: '1rem',
       cursor: 'pointer',
       display: 'inline-flex',
       justifyContent: 'center',
-      width: '100%',
+      color: '#fff',
+      fontWeight: 600,
+      fontSize: '1rem',
+    },
+    error: {
+      marginTop: '1.5rem',
+      padding: '1rem',
+      backgroundColor: '#fee',
+      border: '1px solid #fcc',
+      borderRadius: '0.5rem',
+      color: '#c00',
+    },
+    success: {
+      marginTop: '1.5rem',
+      padding: '1.5rem',
+      backgroundColor: '#efe',
+      border: '1px solid #cfc',
+      borderRadius: '0.5rem',
+    },
+    list: {
+      listStyle: 'none',
+      padding: 0,
+      margin: '1rem 0 0 0',
+    },
+    listItem: {
+      padding: '0.75rem',
+      marginBottom: '0.5rem',
+      backgroundColor: '#fafafa',
+      borderRadius: '0.5rem',
+      border: '1px solid #eee',
     },
   };
 
@@ -236,10 +265,10 @@ export default function Feedback() {
     <div style={pageStyles}>
       {/* Inline CSS for scrollbar */}
       <style>{`
-        .feedback-nav-menu::-webkit-scrollbar { height: 4px; }
-        .feedback-nav-menu::-webkit-scrollbar-track { background: transparent; }
-        .feedback-nav-menu::-webkit-scrollbar-thumb { background: rgba(232, 75, 75, 0.3); border-radius: 10px; }
-        .feedback-nav-menu::-webkit-scrollbar-thumb:hover { background: rgba(232, 75, 75, 0.5); }
+        .setup-nav-menu::-webkit-scrollbar { height: 4px; }
+        .setup-nav-menu::-webkit-scrollbar-track { background: transparent; }
+        .setup-nav-menu::-webkit-scrollbar-thumb { background: rgba(232, 75, 75, 0.3); border-radius: 10px; }
+        .setup-nav-menu::-webkit-scrollbar-thumb:hover { background: rgba(232, 75, 75, 0.5); }
       `}</style>
 
       {/* Left Sidebar */}
@@ -253,7 +282,7 @@ export default function Feedback() {
         {!isMobile && <div style={navHeaderStyles}>Discover</div>}
 
         {/* Navigation Menu */}
-        <nav className="feedback-nav-menu" style={navMenuStyles}>
+        <nav className="setup-nav-menu" style={navMenuStyles}>
           <Link to="/dashboard" style={navItemStyles}>
             <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M5 3H19C19.5523 3 20 3.44772 20 4V20C20 20.5523 19.5523 21 19 21H5C4.44772 21 4 20.5523 4 20V4C4 3.44772 4.44772 3 5 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -296,7 +325,7 @@ export default function Feedback() {
             </svg>
             <span style={navTextStyles}>Help</span>
           </Link>
-          <Link to="/feedback" style={{...navItemStyles, ...navItemActive}}>
+          <Link to="/feedback" style={navItemStyles}>
             <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 2L22 6L14 14L10 14L10 10L18 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M10 14L14 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -304,7 +333,7 @@ export default function Feedback() {
             </svg>
             <span style={navTextStyles}>Feedback</span>
           </Link>
-          <Link to="/setup" style={navItemStyles}>
+          <Link to="/setup" style={{...navItemStyles, ...navItemActive}}>
             <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
               <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -316,68 +345,59 @@ export default function Feedback() {
 
       {/* Main Content */}
       <main style={contentStyles}>
-        <h1 style={styles.title}>Feedback</h1>
+        <h1 style={styles.title}>Setup CRM Integration</h1>
         <div style={styles.card}>
-          <input
-            value={name}
-            onChange={(ev) => setName(ev.target.value)}
-            style={styles.input}
-            placeholder="Name"
-          />
-          <input
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            style={styles.input}
-            placeholder="Email"
-            type="email"
-          />
-          <input
-            value={phone}
-            onChange={(ev) => setPhone(ev.target.value)}
-            style={styles.input}
-            placeholder="Phone"
-          />
+          <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>Giftology KEAP Setup</h2>
+          <p style={{ marginBottom: '1rem', color: '#666' }}>
+            Running setup for <strong>subscriber_serial = {subscriberSerial}</strong>
+          </p>
+          {loading && (
+            <div style={{ padding: '1rem', backgroundColor: '#f0f0f0', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+              <strong>Processing setup...</strong>
+            </div>
+          )}
 
-          <div style={styles.checkboxContainer}>
-            <input
-              id="wantsResponse"
-              type="checkbox"
-              checked={wantsResponse}
-              onChange={(ev) => setWantsResponse(ev.target.checked)}
-              style={styles.checkbox}
-            />
-            <label htmlFor="wantsResponse" style={styles.label}>I would like a response.</label>
-          </div>
-          <div style={{...styles.checkboxContainer, marginTop: '0.375rem'}}>
-            <input
-              id="wantsUpdates"
-              type="checkbox"
-              checked={wantsUpdates}
-              onChange={(ev) => setWantsUpdates(ev.target.checked)}
-              style={styles.checkbox}
-            />
-            <label htmlFor="wantsUpdates" style={styles.label}>Email me about updates.</label>
-          </div>
+          {/* ERROR */}
+          {error && (
+            <div style={styles.error}>
+              <strong>{error}</strong>
+            </div>
+          )}
 
-          <textarea
-            value={comment}
-            onChange={(ev) => setComment(ev.target.value)}
-            style={{...styles.input, height: '11rem', marginTop: '0.75rem'}}
-            placeholder=""
-          />
-
-          <button
-            disabled={!comment || loading}
-            style={{
-              ...styles.button,
-              ...((!comment || loading) ? {opacity: 0.6, cursor: 'not-allowed'} : {})
-            }}
-            onClick={onSubmit}
-          >
-            <span style={{color: '#fff', fontWeight: 700}}>{loading ? 'Submitting...' : 'Submit'}</span>
-          </button>
+          {/* SUCCESS RESULTS */}
+          {result && (
+            <div style={styles.success}>
+              <h3 style={{ marginTop: 0, color: '#060', fontSize: '1.25rem' }}>{result.message || 'Setup completed successfully'}</h3>
+              {result.created_tags && Array.isArray(result.created_tags) && result.created_tags.length > 0 ? (
+                <>
+                  <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 600 }}>Tag Sync Results:</h4>
+                  <ul style={styles.list}>
+                    {result.created_tags.map((t, index) => {
+                      const tagName = t.tag_name || t.tag ;
+                    //   const keapId = t.keap_id;
+                      return (
+                        <li key={index} style={styles.listItem}>
+                          <strong>{tagName}</strong>
+                          {/* {keapId !== null && keapId !== undefined ? (
+                            <span> — KEAP ID: {keapId}</span>
+                          ) : (
+                            <span> — Created (ID pending)</span>
+                          )} */}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              ) : result.created_tags && Array.isArray(result.created_tags) && result.created_tags.length === 0 ? (
+                <p style={{ marginTop: '1rem', color: '#666', fontStyle: 'italic' }}>
+                  No tags were created or updated.
+                </p>
+              ) : null}
+            </div>
+          )}
         </div>
       </main>
     </div>
   );
 }
+

@@ -116,16 +116,13 @@ function Sidebar({ navigate }) {
       <div style={styles.menuHeader}>Discover</div>
 
       {/* Menu items list */}
-      <MenuItem text="Dashboard" />
-      <MenuItem text="Reports" />
-      <MenuItem text="Dates & DOV" />
-      <MenuItem text="Contacts" />
-      <MenuItem text="Help" active={true} />
-      <MenuItem
-        
-        text="Feedback"
-        onClick={() => navigate("/feedback")}
-      />
+      <MenuItem text="Dashboard" onClick={() => navigate("/dashboard")} />
+      <MenuItem text="Reports" onClick={() => navigate("/reports")} />
+      <MenuItem text="Dates & DOV" onClick={() => navigate("/dov")} />
+      <MenuItem text="Contacts" onClick={() => navigate("/contacts")} />
+      <MenuItem text="Help" active={true} onClick={() => navigate("/help")} />
+      <MenuItem text="Feedback" onClick={() => navigate("/feedback")} />
+      <MenuItem text="Setup CRM Integration" onClick={() => navigate("/setup")} />
     </aside>
   );
 }

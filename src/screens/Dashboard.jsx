@@ -31,6 +31,7 @@ const menuItems = [
   { key: 'reports', label: 'Reports', path: '/reports', icon: <ReportsIcon size={16} /> },
   { key: 'help', label: 'Help', path: '/help', icon: <HelpIcon size={16} /> },
   { key: 'feedback', label: 'Feedback', path: '/feedback', icon: <FeedbackIcon size={16} /> },
+  { key: 'setup', label: 'Setup CRM Integration', path: '/setup', icon: <HelpIcon size={16} /> },
 ]
 
 const hamburgerButton = { padding: 8, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer' }
@@ -231,6 +232,10 @@ export default function Dashboard() {
           <div style={sideItem} onClick={() => navigate('/feedback')}>
             <FeedbackIcon size={16} color='#333' />
             <span style={{ fontSize: 14 }}>Feedback</span>
+          </div>
+          <div style={sideItem} onClick={() => navigate('/setup')}>
+            <HelpIcon size={16} color='#333' />
+            <span style={{ fontSize: 14 }}>Setup CRM Integration</span>
           </div>
         </aside>
       )}

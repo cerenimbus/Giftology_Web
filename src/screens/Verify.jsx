@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthorizeDeviceID } from '../utils/api';
-import { getAuthCode, removeAuthCode } from '../utils/storage';
+import { setAuthCode, removeAuthCode } from '../utils/storage';
 import './Verify.css';
 
 export default function Verify() {
@@ -14,13 +14,16 @@ export default function Verify() {
 
     setLoading(true);
     try {
-      const deviceCode = await getAuthCode(); 
-      const checkCode = code || deviceCode;
-
-     
-      const res = await AuthorizeDeviceID({ SecurityCode: checkCode });
+      // Use the user-entered 6-digit security code
+      const res = await AuthorizeDeviceID({ SecurityCode: code });
 
       if (res?.success) {
+        // Extract the Authorization Code from the <Auth> tag in the response
+        const ac = res?.parsed?.Auth || res?.parsed?.auth || res?.parsed?.AC || res?.parsed?.ac || '';
+        if (ac) {
+          // Store the AC in a cookie that expires in 30 days (1 month)
+          await setAuthCode(ac);
+        }
         navigate('/dashboard');
       } else {
         alert(res?.message || 'Verification failed');
@@ -29,6 +32,7 @@ export default function Verify() {
       }
     } catch (e) {
       alert(`Error: ${String(e)}`);
+      await removeAuthCode();
     } finally {
       setLoading(false);
     }
