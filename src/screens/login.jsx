@@ -195,7 +195,7 @@ export default function Login() {
             {passwordVisible ? 'Hide' : 'Show'}
           </button>
         </div>
-
+        <label style={styles.label}>By logging into the system you agree to receive multi-factor-authentication by text message, data and message rates may apply.</label>
         {/* Login button */}
         <button
           disabled={!termsChecked || loading}
