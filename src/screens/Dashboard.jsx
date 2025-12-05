@@ -14,6 +14,7 @@ import {
   FeedbackIcon,
 } from '../components/Icons'
 import { GetDashboard } from '../utils/api'
+import { removeAuthCode } from '../utils/storage';
 
 function getCols(width = 1200) {
   // Mobile phones/tablets (<=900px): single column for better readability
@@ -32,6 +33,7 @@ const menuItems = [
   { key: 'help', label: 'Help', path: '/help', icon: <HelpIcon size={16} /> },
   { key: 'feedback', label: 'Feedback', path: '/feedback', icon: <FeedbackIcon size={16} /> },
   { key: 'setup', label: 'Setup CRM Integration', path: '/setup', icon: <HelpIcon size={16} /> },
+  { key: 'logout', label: ' ← Logout' },
 ]
 
 const hamburgerButton = { padding: 8, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer' }
@@ -183,6 +185,14 @@ export default function Dashboard() {
     outcomes: { introductions: 0, referrals: 0, referralPartners: 0, partners: 0 }, // Mobile uses 'partners'
     referralRevenue: 0,
   }
+/**
+ * Logs out the user by removing the auth code from the cookie and localStorage
+ * and then redirects to the login page
+ */
+  const handleLogout = async () => {
+    await removeAuthCode();   // clears cookie + localStorage
+    navigate('/login');   // or '/login' depending on your routing
+  };
 
   const toNumber = (v) => {
     if (v === undefined || v === null) return 0
@@ -237,6 +247,46 @@ export default function Dashboard() {
             <HelpIcon size={16} color='#333' />
             <span style={{ fontSize: 14 }}>Setup CRM Integration</span>
           </div>
+          {/* <div style={sideItem} onClick={handleLogout}>
+            <span style={{ fontSize: 14 }}>Logout</span>
+          </div> */}
+          <div 
+            style={{
+              marginTop: 20,
+              padding: '0 16px',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <button 
+              onClick={handleLogout}
+              style={{
+                width: '100%',
+                backgroundColor: '#e84b4b',
+                color: '#fff',
+                padding: '12px 16px',
+                borderRadius: 6,
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'transform 0.15s ease, background-color 0.2s ease',
+                
+              }}
+             
+            >
+              
+                <>
+                  <span style={{ fontSize: 16 }}>←</span>
+                  Logout
+                </>
+              
+            </button>
+          </div>
         </aside>
       )}
 
@@ -271,7 +321,22 @@ export default function Dashboard() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {menuItems.map(item => (
-                <button key={item.key} onClick={() => { setShowMenu(false); navigate(item.path) }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', borderRadius: 8 }} role='menuitem'>
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    setShowMenu(false);
+
+                    if (item.key === 'logout') {
+                      handleLogout();       // ← runs your logout logic
+                    } else {
+                      navigate(item.path);  // ← normal navigation
+                    }
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', borderRadius: 8
+                  }}
+                  role="menuitem"
+                >
                   {item.icon}
                   <span style={{ fontSize: 14 }}>{item.label}</span>
                 </button>

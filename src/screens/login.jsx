@@ -196,6 +196,49 @@ export default function Login() {
           </button>
         </div>
         <label style={styles.label}>By logging into the system you agree to receive multi-factor-authentication by text message, data and message rates may apply.</label>
+        
+        {/* Checkbox and Terms */}
+        <div style={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={termsChecked}
+            onChange={(e) => setTermsChecked(e.target.checked)}
+            style={styles.nativeCheckbox}
+          />
+          {/* <span style={styles.small}>
+            Accept{' '}
+            <a
+              href="https://radar.giftologygroup.com/privacypolicy.html"
+              target="_blank"
+              rel="noreferrer"
+              style={styles.link}
+            >
+              Terms and Privacy Policy
+            </a>
+          </span> */}
+
+          <span style={styles.small}>
+            Accept{' '}
+            <a
+              href="https://radar.giftologygroup.com/terms.html"
+              target="_blank"
+              rel="noreferrer"
+              style={styles.link}
+            >
+              Terms
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://radar.giftologygroup.com/privacypolicy.html"
+              target="_blank"
+              rel="noreferrer"
+              style={styles.link}
+            >
+              Privacy Policy
+            </a>
+          </span>
+        </div>
+
         {/* Login button */}
         <button
           disabled={!termsChecked || loading}
@@ -205,26 +248,7 @@ export default function Login() {
           {loading ? 'Signing in...' : 'Log in'}
         </button>
 
-        {/* Checkbox and Terms */}
-        <div style={styles.checkboxRow}>
-          <input
-            type="checkbox"
-            checked={termsChecked}
-            onChange={(e) => setTermsChecked(e.target.checked)}
-            style={styles.nativeCheckbox}
-          />
-          <span style={styles.small}>
-            Accept{' '}
-            <a
-              href="https://radar.giftologygroup.com/privacypolicy.html"
-              target="_blank"
-              rel="noreferrer"
-              style={styles.link}
-            >
-              terms and Privacy Policy
-            </a>
-          </span>
-        </div>
+        
 
         {/* Reset password */}
         <div style={{ textAlign: 'center', marginTop: 10 }}>
@@ -317,6 +341,6 @@ const styles = {
   checkboxRow: { display: 'flex', alignItems: 'center', marginTop: 16 },
   nativeCheckbox: { marginRight: 6 },
   small: { fontSize: 13, color: '#222' },
-  link: { color: '#000', textDecoration: 'none', fontWeight: 500 },
+  link: { color: '#000', textDecoration: 'underline', fontWeight: 500 },
   reset: { color: '#000', textDecoration: 'none', fontSize: 13 },
 };
