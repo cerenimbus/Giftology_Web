@@ -390,6 +390,25 @@ export async function UpdateFeedback({ Name, Email, Phone, Response, Update, Com
   return callService('UpdateFeedback', { Name, Email, Phone, Response, Update, Comment })
 }
 
+export async function GetUserInfo() {
+  const r = await callService('GetUserInfo')
+  if (!r.success) return r
+  
+  // Handle both correct spelling "Contact" and typo "Conctact"
+  const contact = r.parsed?.Contact || r.parsed?.Conctact || {}
+  
+  return {
+    success: true,
+    data: {
+      name: textOf(contact?.Name),
+      email: textOf(contact?.Email),
+      company: textOf(contact?.Company),
+      serial: Number(textOf(contact?.Serial) || 0),
+      subscriber: Number(textOf(contact?.Subscriber) || 0)
+    }
+  }
+}
+
 // Helper function to get device information in web
 async function getDeviceInfo() {
   try {

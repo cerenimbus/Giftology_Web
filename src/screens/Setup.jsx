@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GetUserInfo } from '../utils/api';
 
 export default function Setup() {
   const navigate = useNavigate();
-  const subscriberSerial = 1; // HARDCODED VALUE
+  const [userInfo, setUserInfo] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -14,6 +15,16 @@ export default function Setup() {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const r = await GetUserInfo();
+      if (r.success) {
+        setUserInfo(r.data);
+      }
+    };
+    loadUserInfo();
   }, []);
 
   // Automatically run setup when component mounts
@@ -40,9 +51,10 @@ export default function Setup() {
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ subscriber_serial: subscriberSerial })
+          body: JSON.stringify({ subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email })
         }
       );
+      console.log('API Response:', response);
 
       // Get response text first to check if it's JSON
       const responseText = await response.text();
@@ -349,7 +361,7 @@ export default function Setup() {
         <div style={styles.card}>
           <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>Giftology KEAP Setup</h2>
           <p style={{ marginBottom: '1rem', color: '#666' }}>
-            Running setup for <strong>subscriber_serial = {subscriberSerial}</strong>
+            Running setup for <strong>subscriber_serial = {userInfo?.subscriber}</strong>
           </p>
           {loading && (
             <div style={{ padding: '1rem', backgroundColor: '#f0f0f0', borderRadius: '0.5rem', marginBottom: '1rem' }}>
