@@ -90,7 +90,17 @@ export async function fetchWithTimeout(url, options = {}, timeout = 15000) {
 // returns { success, errorNumber, message, raw, parsed, requestUrl }
 export async function callService(functionName, extraParams = {}, paramOrder = null) {
   console.log(`[callService] Starting API call: ${functionName}`)
-  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' })
+  const parser = new XMLParser({ 
+    ignoreAttributes: false, 
+    attributeNamePrefix: '',
+    textNodeName: '#text',
+    parseTagValue: true,
+    parseNodeValue: true,
+    trimValues: true,
+    parseTrueNumberOnly: false,
+    arrayMode: false, // Don't force arrays
+    alwaysCreateTextNode: false
+  })
   const deviceId = (await getDeviceId()) || ''
   const ac = (await getAuthCode()) || ''
 
@@ -131,6 +141,16 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
 
     const obj = parser.parse(txt)
     console.log(`[callService] Parsed XML object:`, obj)
+    console.log(`[callService] Parsed XML keys:`, Object.keys(obj || {}))
+    if (obj?.ResultInfo) {
+      console.log(`[callService] ResultInfo keys:`, Object.keys(obj.ResultInfo))
+      if (obj.ResultInfo.Selections) {
+        console.log(`[callService] Selections keys:`, Object.keys(obj.ResultInfo.Selections))
+        console.log(`[callService] Selections has DOVGraph:`, 'DOVGraph' in obj.ResultInfo.Selections)
+        console.log(`[callService] Selections has RevenueGraph:`, 'RevenueGraph' in obj.ResultInfo.Selections)
+        console.log(`[callService] Selections has DOV:`, 'DOV' in obj.ResultInfo.Selections)
+      }
+    }
     
     const ri = obj?.ResultInfo || obj
     const err = Number(ri?.ErrorNumber) || 0
@@ -212,20 +232,26 @@ export async function GetDashboard() {
   }
 
   const sel = r.parsed?.Selections || {}
-
-  // Helper to recursively search for DOV fields in nested Task structure
-  const findDovFields = (obj, depth = 0) => {
-    if (!obj || typeof obj !== 'object' || depth > 10) return null
+  const rawParsed = r.parsed || {}
+  
+  console.log('[GetDashboard] Selections keys:', Object.keys(sel))
+  console.log('[GetDashboard] Selections structure:', sel)
+  console.log('[GetDashboard] Selections structure (JSON):', JSON.stringify(sel, null, 2))
+  
+  // Helper to recursively search for fields in nested structure
+  const findFields = (obj, targetFields, depth = 0) => {
+    if (!obj || typeof obj !== 'object' || depth > 15) return null
     
-    // Check if this object has the DOV fields we're looking for
-    if (obj.HarmlessStarter !== undefined || obj.Greenlight !== undefined || obj.TotalDOV !== undefined) {
+    // Check if this object has any of the target fields
+    const hasTargetField = targetFields.some(field => obj[field] !== undefined)
+    if (hasTargetField) {
       return obj
     }
     
     // Recursively search in nested objects
     for (const key in obj) {
-      if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null) {
-        const found = findDovFields(obj[key], depth + 1)
+      if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null && key !== '#text') {
+        const found = findFields(obj[key], targetFields, depth + 1)
         if (found) return found
       }
     }
@@ -233,33 +259,140 @@ export async function GetDashboard() {
     return null
   }
 
-  // Find DOV fields in the nested Task structure
-  const dovFields = findDovFields(sel?.Task) || {}
-
-  // Parse DOV array to extract additional DOV types (if needed)
-  const dovMap = {}
-  const dovSources = []
-  if (sel?.DOV) dovSources.push(sel.DOV)
-  if (dovFields?.DOV) dovSources.push(dovFields.DOV)
+  // Find DOV fields (HarmlessStarter, Greenlight, ClarityConvos, etc.) in the nested Task structure
+  const dovFields = findFields(sel?.Task, ['HarmlessStarter', 'Greenlight', 'ClarityConvos', 'TotalDOV', 'Introduction', 'Referral', 'Partner']) || {}
   
-  dovSources.forEach(dovSource => {
-    const dovArray = Array.isArray(dovSource) ? dovSource : [dovSource]
-    dovArray.forEach(dov => {
-      const name = (textOf(dov?.Name) || '').toLowerCase().trim()
-      const count = parseFormattedNumber(textOf(dov?.Count))
-      if (name) {
-        if (name.includes('handwritten') || name.includes('note')) {
-          dovMap.handwrittenNotes = (dovMap.handwrittenNotes || 0) + count
-        } else if (name.includes('gift')) {
-          dovMap.gifting = (dovMap.gifting || 0) + count
-        } else if (name.includes('video')) {
-          dovMap.videos = (dovMap.videos || 0) + count
-        } else if (name.includes('other')) {
-          dovMap.other = (dovMap.other || 0) + count
-        }
+  // Find graph data (DOVGraph, RevenueGraph, DOV) in the nested Task structure
+  const graphFields = findFields(sel?.Task, ['DOVGraph', 'RevenueGraph', 'DOV']) || {}
+  console.log('[GetDashboard] Found graphFields:', graphFields)
+  console.log('[GetDashboard] graphFields.DOVGraph:', graphFields?.DOVGraph)
+  console.log('[GetDashboard] graphFields.RevenueGraph:', graphFields?.RevenueGraph)
+  console.log('[GetDashboard] graphFields.DOV:', graphFields?.DOV)
+  
+  // Also try direct deep access as fallback (based on the actual structure we saw in the JSON)
+  // The path is: Task -> TaskName -> TaskName -> Task -> TaskName -> TaskName -> Task -> TaskName -> TaskName
+  const deepGraphFields = sel?.Task?.TaskName?.TaskName?.Task?.TaskName?.TaskName?.Task?.TaskName?.TaskName || {}
+  console.log('[GetDashboard] Deep graphFields:', deepGraphFields)
+  console.log('[GetDashboard] Deep graphFields.DOVGraph:', deepGraphFields?.DOVGraph)
+  console.log('[GetDashboard] Deep graphFields.RevenueGraph:', deepGraphFields?.RevenueGraph)
+  console.log('[GetDashboard] Deep graphFields.DOV:', deepGraphFields?.DOV)
+
+  // Helper to find in object with case-insensitive matching
+  const findInObject = (obj, key) => {
+    if (!obj || typeof obj !== 'object') return undefined
+    // Try exact match first
+    if (key in obj) return obj[key]
+    // Try case-insensitive match
+    const foundKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase())
+    if (foundKey) return obj[foundKey]
+    return undefined
+  }
+  
+  // Try Selections first, then the nested graphFields we found, then deep access
+  const dovGraphSource = findInObject(sel, 'DOVGraph') 
+    || findInObject(graphFields, 'DOVGraph') 
+    || findInObject(deepGraphFields, 'DOVGraph')
+    || findInObject(rawParsed, 'DOVGraph') 
+    || findInObject(rawParsed?.Selections, 'DOVGraph')
+  
+  const revenueGraphSource = findInObject(sel, 'RevenueGraph') 
+    || findInObject(graphFields, 'RevenueGraph')
+    || findInObject(deepGraphFields, 'RevenueGraph')
+    || findInObject(rawParsed, 'RevenueGraph') 
+    || findInObject(rawParsed?.Selections, 'RevenueGraph')
+  
+  const dovSource = findInObject(sel, 'DOV') 
+    || findInObject(graphFields, 'DOV')
+    || findInObject(deepGraphFields, 'DOV')
+    || findInObject(rawParsed, 'DOV') 
+    || findInObject(rawParsed?.Selections, 'DOV')
+  
+  console.log('[GetDashboard] Final dovGraphSource:', dovGraphSource)
+  console.log('[GetDashboard] Final revenueGraphSource:', revenueGraphSource)
+  console.log('[GetDashboard] Final dovSource:', dovSource)
+
+  // Parse DOV array to extract DOV types with Name and Count
+  const dovMap = {}
+  const dovArrayRaw = dovSource || sel?.DOV
+  const dovArray = Array.isArray(dovArrayRaw) ? dovArrayRaw : (dovArrayRaw ? [dovArrayRaw] : [])
+  
+  console.log('[GetDashboard] DOV array raw:', dovArrayRaw)
+  console.log('[GetDashboard] DOV array processed:', dovArray)
+  
+  dovArray.forEach(dov => {
+    const name = (textOf(dov?.Name) || '').toLowerCase().trim()
+    const count = parseFormattedNumber(textOf(dov?.Count))
+    if (name) {
+      if (name.includes('handwritten') || name.includes('note')) {
+        dovMap.handwrittenNotes = (dovMap.handwrittenNotes || 0) + count
+      } else if (name.includes('gift')) {
+        dovMap.gifting = (dovMap.gifting || 0) + count
+      } else if (name.includes('video')) {
+        dovMap.videos = (dovMap.videos || 0) + count
+      } else if (name.includes('other')) {
+        dovMap.other = (dovMap.other || 0) + count
       }
-    })
+    }
   })
+  
+  // Create dovList for display
+  const dovList = dovArray.map(dov => ({
+    name: textOf(dov?.Name) || '',
+    count: parseFormattedNumber(textOf(dov?.Count))
+  }))
+
+  // Helper to extract data points from graph structure
+  const extractDataPoints = (graphSource) => {
+    if (!graphSource) {
+      console.log('[GetDashboard] extractDataPoints: graphSource is null/undefined')
+      return []
+    }
+    
+    console.log('[GetDashboard] extractDataPoints: graphSource type:', typeof graphSource, 'keys:', Object.keys(graphSource || {}))
+    
+    // Handle different XML parser structures
+    let dataPoints = []
+    
+    // Try different possible property names (case variations)
+    const dataPointKey = Object.keys(graphSource).find(key => 
+      key.toLowerCase() === 'datapoint' || key === 'DataPoint'
+    ) || 'DataPoint'
+    
+    const dataPointValue = graphSource[dataPointKey]
+    console.log('[GetDashboard] extractDataPoints: dataPointKey:', dataPointKey, 'dataPointValue:', dataPointValue)
+    
+    // Case 1: DataPoint is an array
+    if (Array.isArray(dataPointValue)) {
+      dataPoints = dataPointValue
+    }
+    // Case 2: DataPoint is a single object
+    else if (dataPointValue && typeof dataPointValue === 'object') {
+      dataPoints = [dataPointValue]
+    }
+    // Case 3: DataPoint might be a primitive (unlikely but handle it)
+    else if (dataPointValue !== undefined && dataPointValue !== null) {
+      console.warn('[GetDashboard] extractDataPoints: Unexpected DataPoint type:', typeof dataPointValue)
+    }
+    
+    console.log('[GetDashboard] extractDataPoints: extracted dataPoints array length:', dataPoints.length)
+    
+    return dataPoints.map((dp, idx) => {
+      const label = textOf(dp?.Label) || textOf(dp?.label) || ''
+      const value = parseFormattedNumber(textOf(dp?.Value) || textOf(dp?.value))
+      console.log(`[GetDashboard] extractDataPoints: point ${idx}: label="${label}", value=${value}`)
+      return { label, value }
+    })
+  }
+
+  // Parse DOVGraph data points - try multiple locations
+  const dovGraphDataPoints = extractDataPoints(dovGraphSource)
+  console.log('[GetDashboard] DOVGraph source found:', !!dovGraphSource, dovGraphSource)
+  console.log('[GetDashboard] Parsed DOVGraph points:', dovGraphDataPoints)
+
+  // Parse RevenueGraph data points - try multiple locations
+  const revenueGraphDataPoints = extractDataPoints(revenueGraphSource)
+  console.log('[GetDashboard] RevenueGraph source found:', !!revenueGraphSource, revenueGraphSource)
+  console.log('[GetDashboard] Parsed RevenueGraph points:', revenueGraphDataPoints)
 
   // Helper to extract number from XML field (handles both direct numbers and textOf format)
   const getNumber = (field) => {
@@ -278,14 +411,24 @@ export async function GetDashboard() {
   }
 
   // Extract DOV fields from nested structure (they're inside Task.TaskName.TaskName.Task.TaskName)
-  // Try root level first, then nested structure
-  const harmLessStarter = getNumber(sel?.HarmlessStarter || dovFields?.HarmlessStarter)
-  const greenlight = getNumber(sel?.Greenlight || dovFields?.Greenlight)
-  const clarityConvos = getNumber(sel?.ClarityConvos || dovFields?.ClarityConvos)
-  const totalDov = getNumber(sel?.TotalDOV || sel?.TotalDov || dovFields?.TotalDOV || dovFields?.TotalDov)
-  const introduction = getNumber(sel?.Introduction || dovFields?.Introduction)
-  const referral = getNumber(sel?.Referral || dovFields?.Referral)
-  const partner = getNumber(sel?.Partner || dovFields?.Partner)
+  // Try root level first, then nested structure, then deepGraphFields (same location as DOVGraph)
+  const harmLessStarter = getNumber(sel?.HarmlessStarter || dovFields?.HarmlessStarter || deepGraphFields?.HarmlessStarter)
+  const greenlight = getNumber(sel?.Greenlight || dovFields?.Greenlight || deepGraphFields?.Greenlight)
+  const clarityConvos = getNumber(sel?.ClarityConvos || dovFields?.ClarityConvos || deepGraphFields?.ClarityConvos)
+  const totalDov = getNumber(sel?.TotalDOV || sel?.TotalDov || dovFields?.TotalDOV || dovFields?.TotalDov || deepGraphFields?.TotalDOV || deepGraphFields?.TotalDov)
+  const introduction = getNumber(sel?.Introduction || dovFields?.Introduction || deepGraphFields?.Introduction)
+  const referral = getNumber(sel?.Referral || dovFields?.Referral || deepGraphFields?.Referral)
+  const partner = getNumber(sel?.Partner || dovFields?.Partner || deepGraphFields?.Partner)
+  
+  console.log('[GetDashboard] Extracted DOV values:', {
+    harmLessStarter,
+    greenlight,
+    clarityConvos,
+    totalDov,
+    introduction,
+    referral,
+    partner
+  })
   
   // Map a compact JS object expected by UI (matching mobile structure)
   const data = {
@@ -315,7 +458,19 @@ export async function GetDashboard() {
     // Mobile-compatible top-level dovTotal
     dovTotal: totalDov,
     
-    referralRevenue: getNumber(sel?.ReferralRevenue || sel?.ReferralRevenueGenerated || sel?.referralRevenue || dovFields?.ReferralRevenue || 0),
+    referralRevenue: (() => {
+      // Try to get from explicit field first
+      const explicitRevenue = getNumber(sel?.ReferralRevenue || sel?.ReferralRevenueGenerated || sel?.referralRevenue || dovFields?.ReferralRevenue)
+      if (explicitRevenue > 0) return explicitRevenue
+      
+      // If no explicit revenue, use the last value from revenue graph
+      if (revenueGraphDataPoints.length > 0) {
+        const lastValue = revenueGraphDataPoints[revenueGraphDataPoints.length - 1].value
+        return lastValue || 0
+      }
+      
+      return 0
+    })(),
     outcomes: {
       introductions: introduction,
       referrals: referral,
@@ -323,6 +478,13 @@ export async function GetDashboard() {
       // Mobile-compatible property name
       partners: partner,
     },
+    
+    // Graph data
+    dovGraph: dovGraphDataPoints,
+    revenueGraph: revenueGraphDataPoints,
+    
+    // DOV array with Name and Count
+    dovList: dovList,
   }
 
   return { success: true, data }
