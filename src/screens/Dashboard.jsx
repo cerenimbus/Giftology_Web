@@ -82,6 +82,9 @@ export default function Dashboard() {
             console.log('[Dashboard] Dates & DOV:', r.data.datesDov)
             console.log('[Dashboard] Outcomes:', r.data.outcomes)
             console.log('[Dashboard] Referral Revenue:', r.data.referralRevenue)
+            console.log('[Dashboard] DOV Graph Data Points:', r.data.dovGraph?.length || 0, r.data.dovGraph)
+            console.log('[Dashboard] Revenue Graph Data Points:', r.data.revenueGraph?.length || 0, r.data.revenueGraph)
+            console.log('[Dashboard] DOV List:', r.data.dovList?.length || 0, r.data.dovList)
             console.log('[Dashboard] Best Partners Count:', r.data.bestReferralPartners?.length || 0)
             console.log('[Dashboard] Current Relationships Count:', r.data.currentRunawayRelationships?.length || 0)
             console.log('[Dashboard] Recent Partners Count:', r.data.recentlyIdentifiedPartners?.length || 0)
@@ -147,6 +150,10 @@ export default function Dashboard() {
       partners: data.outcomes?.partners || data.outcomes?.referralPartners || 0, // Mobile uses 'partners'
     },
     referralRevenue: data.referralRevenue || 0,
+    // Graph data
+    dovGraph: data.dovGraph || [],
+    revenueGraph: data.revenueGraph || [],
+    dovList: data.dovList || [],
   } : {
     bestReferralPartners: [
       { name: 'Jack Miller', amount: '$36,000' },
@@ -184,6 +191,10 @@ export default function Dashboard() {
     ],
     outcomes: { introductions: 0, referrals: 0, referralPartners: 0, partners: 0 }, // Mobile uses 'partners'
     referralRevenue: 0,
+    // Graph data (empty fallback)
+    dovGraph: [],
+    revenueGraph: [],
+    dovList: [],
   }
 /**
  * Logs out the user by removing the auth code from the cookie and localStorage
@@ -362,26 +373,8 @@ export default function Dashboard() {
               {d.bestReferralPartners.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.amount} />)}
             </Card>
 
-            <Card title='Current Runaway Relationships' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
+            <Card title='Current Run away Relationships' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               {d.currentRunawayRelationships.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.phone} rightColor='#999' />)}
-            </Card>
-
-            <Card title='Dates & DOV' span={cols === 1 ? 1 : 2} isDesktop={isDesktop}>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-                <Pill label='Total DOV' value={formatNumber(d.dovTotal || d.datesDov?.totalDov || 0)} />
-                <Pill label='Introductions' value={formatNumber(d.outcomes.introductions)} />
-                <Pill label='Referrals' value={formatNumber(d.outcomes.referrals)} />
-              </div>
-
-              <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 16, color: '#333' }}>Total DOV Activities</div>
-              <div style={{ backgroundColor: '#fafafa', padding: 20, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <svg width='100%' height='120' viewBox='0 0 400 120' preserveAspectRatio='none' style={{ display: 'block', minHeight: '120px' }}>
-                    <path d='M 0 105 C 8 102, 15 98, 22 100 C 29 102, 35 99, 42 101 C 55 105, 68 90, 85 70 C 95 55, 105 45, 115 50 C 125 55, 135 65, 145 70 C 155 75, 165 80, 175 88 C 185 96, 192 105, 200 110 C 208 115, 215 112, 225 105 C 235 98, 242 85, 250 70 C 258 55, 262 45, 265 35 C 268 25, 270 20, 275 25 C 280 30, 285 40, 290 50 C 293 56, 296 60, 298 55 C 300 50, 303 40, 308 30 C 313 23, 318 20, 325 22 C 332 24, 340 25, 350 25 C 360 25, 370 25, 380 25 C 390 25, 400 25, 400 25' fill='none' stroke='#e84b4b' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' />
-                  </svg>
-                </div>
-                <div style={{ fontSize: 36, color: '#999', fontWeight: 700, whiteSpace: 'nowrap', marginTop: 16 }}>{formatNumber(d.dovTotal || d.datesDov?.totalDov || 0)}</div>
-              </div>
             </Card>
 
             <Card title='Task' onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
@@ -399,6 +392,105 @@ export default function Dashboard() {
               </div>
             </Card>
 
+            <Card title='Dates & DOV' span={cols === 1 ? 1 : 2} isDesktop={isDesktop}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', flex: 1 }}>
+                  <Pill label='Harmless Starters' value={formatNumber(d.datesDov?.harmlessStarters || 0)} />
+                  <Pill label='Greenlight Questions' value={formatNumber(d.datesDov?.greenlightQuestions || 0)} />
+                  <Pill label='Clarity Convos' value={formatNumber(d.datesDov?.clarityConvos || 0)} />
+                </div>
+                <div style={{ marginLeft: 16 }}>
+                  <select 
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      border: '1px solid #ddd',
+                      backgroundColor: '#fff',
+                      fontSize: 14,
+                      color: '#333',
+                      cursor: 'pointer',
+                      minWidth: 120
+                    }}
+                    defaultValue="all"
+                  >
+                    <option value="all">Months</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* DOV Activities List */}
+              {(d.dovList && d.dovList.length > 0) || d.datesDov?.handwrittenNotes || d.datesDov?.gifting || d.datesDov?.videos || d.datesDov?.other ? (
+                <div style={{ marginBottom: 20 }}>
+                  {d.dovList && d.dovList.length > 0 ? (
+                    d.dovList.map((dov, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
+                        <span style={{ fontSize: 14 }}>{dov.name}</span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatNumber(dov.count)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      {d.datesDov?.handwrittenNotes > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
+                          <span style={{ fontSize: 14 }}>Handwritten Notes</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatNumber(d.datesDov.handwrittenNotes)}</span>
+                        </div>
+                      )}
+                      {d.datesDov?.gifting > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
+                          <span style={{ fontSize: 14 }}>Gifting</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatNumber(d.datesDov.gifting)}</span>
+                        </div>
+                      )}
+                      {d.datesDov?.videos > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
+                          <span style={{ fontSize: 14 }}>Videos</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatNumber(d.datesDov.videos)}</span>
+                        </div>
+                      )}
+                      {d.datesDov?.other > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
+                          <span style={{ fontSize: 14 }}>Other</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatNumber(d.datesDov.other)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : null}
+
+              <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 16, color: '#333' }}>Total DOV Activities</div>
+              <div style={{ backgroundColor: '#fafafa', padding: 20, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                  <LineChart dataPoints={d.dovGraph || []} height={120} color='#e84b4b' />
+                  {/* Display graph values below */}
+                  {d.dovGraph && d.dovGraph.length > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, gap: 8, flexWrap: 'wrap' }}>
+                      {d.dovGraph.map((dp, i) => (
+                        <div key={i} style={{ textAlign: 'center', flex: 1, minWidth: 60 }}>
+                          <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>{dp.label || ''}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatNumber(dp.value || 0)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 36, color: '#999', fontWeight: 700, whiteSpace: 'nowrap', marginTop: 16 }}>{formatNumber(d.dovTotal || d.datesDov?.totalDov || 0)}</div>
+              </div>
+            </Card>
+
             <Card title='Recently Identified Potential Partners' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               {d.recentlyIdentifiedPartners.map((x, i) => <Row key={i} left={x.name} right={x.phone} rightColor='#999' />)}
             </Card>
@@ -409,13 +501,22 @@ export default function Dashboard() {
                 <Mini title='Referrals' value={formatNumber(d.outcomes.referrals)} />
                 <Mini title='Referral Partners' value={formatNumber(d.outcomes.partners || d.outcomes.referralPartners)} />
               </div>
-
+                  
               <h3 style={{ marginTop: 30, marginBottom: 16 }}>Referral Revenue Generated</h3>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <svg width='100%' height='120' viewBox='0 0 400 120' preserveAspectRatio='none' style={{ display: 'block', minHeight: '120px' }}>
-                    <path d='M 0 105 C 8 102, 15 98, 22 100 C 29 102, 35 99, 42 101 C 55 105, 68 90, 85 70 C 95 55, 105 45, 115 50 C 125 55, 135 65, 145 70 C 155 75, 165 80, 175 88 C 185 96, 192 105, 200 110 C 208 115, 215 112, 225 105 C 235 98, 242 85, 250 70 C 258 55, 262 45, 265 35 C 268 25, 270 20, 275 25 C 280 30, 285 40, 290 50 C 293 56, 296 60, 298 55 C 300 50, 303 40, 308 30 C 313 23, 318 20, 325 22 C 332 24, 340 25, 350 25 C 360 25, 370 25, 380 25 C 390 25, 400 25, 400 25' fill='none' stroke='#e84b4b' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' />
-                  </svg>
+              <div style={{ backgroundColor: '#fafafa', padding: 20, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                  <LineChart dataPoints={d.revenueGraph || []} height={120} color='#e84b4b' />
+                  {/* Display graph values below */}
+                  {d.revenueGraph && d.revenueGraph.length > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, gap: 8, flexWrap: 'wrap' }}>
+                      {d.revenueGraph.map((dp, i) => (
+                        <div key={i} style={{ textAlign: 'center', flex: 1, minWidth: 60 }}>
+                          <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>{dp.label || ''}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{formatCurrency(dp.value || 0)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div style={{ fontSize: 36, color: '#999', fontWeight: 700, whiteSpace: 'nowrap', marginTop: 16 }}>{formatCurrency(d.referralRevenue)}</div>
               </div>
@@ -428,6 +529,158 @@ export default function Dashboard() {
 }
 
 /* ---------- Reusable helpers ---------- */
+function LineChart({ dataPoints = [], height = 120, color = '#e84b4b', strokeWidth = 2.5 }) {
+  const [hoveredPoint, setHoveredPoint] = useState(null)
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+
+  if (!dataPoints || dataPoints.length === 0) {
+    // Return empty chart if no data
+    return (
+      <svg width='100%' height={height} viewBox={`0 0 400 ${height}`} preserveAspectRatio='none' style={{ display: 'block', minHeight: `${height}px` }}>
+        <line x1='0' y1={height - 10} x2='400' y2={height - 10} stroke='#e0e0e0' strokeWidth='1' />
+      </svg>
+    )
+  }
+
+  const values = dataPoints.map(dp => Number(dp.value) || 0)
+  const maxValue = Math.max(...values, 1) // Avoid division by zero
+  // Use actual minimum from data, not 0, to show better variation
+  const minValue = Math.min(...values)
+  // Add a small buffer (5% of range) to make variations more visible
+  const buffer = (maxValue - minValue) * 0.05 || 1
+  const adjustedMin = Math.max(0, minValue - buffer)
+  const adjustedMax = maxValue + buffer
+  const valueRange = adjustedMax - adjustedMin || 1
+
+  const width = 400
+  const padding = 20
+  const verticalPadding = 10 // Add extra padding top/bottom to make variations more visible
+  const chartHeight = height - padding * 2 - verticalPadding * 2
+  const chartWidth = width - padding * 2
+
+  // Generate path for the line and points with labels
+  const points = dataPoints.map((dp, i) => {
+    const normalizedIndex = dataPoints.length === 1 ? 0 : i / (dataPoints.length - 1)
+    const x = padding + normalizedIndex * chartWidth
+    const normalizedValue = (Number(dp.value) || 0) - adjustedMin
+    // Add vertical padding so line doesn't touch edges, making variations more visible
+    const y = padding + verticalPadding + chartHeight - (normalizedValue / valueRange) * chartHeight
+    return { x, y, label: dp.label || '', value: dp.value || 0, index: i }
+  })
+
+  // Build path string
+  let pathString = ''
+  if (points.length === 1) {
+    // Single point - draw a horizontal line
+    pathString = `M ${padding} ${points[0].y} L ${width - padding} ${points[0].y}`
+  } else if (points.length > 1) {
+    pathString = `M ${points[0].x} ${points[0].y}`
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1]
+      const curr = points[i]
+      // Use smooth curves between points
+      const cp1x = prev.x + (curr.x - prev.x) / 3
+      const cp1y = prev.y
+      const cp2x = curr.x - (curr.x - prev.x) / 3
+      const cp2y = curr.y
+      pathString += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`
+    }
+  }
+
+  const handleMouseMove = (e) => {
+    const svg = e.currentTarget
+    const rect = svg.getBoundingClientRect()
+    const svgWidth = rect.width
+    const svgHeight = rect.height
+    const mouseX = ((e.clientX - rect.left) / svgWidth) * width
+    const mouseY = ((e.clientY - rect.top) / svgHeight) * height
+    
+    // Find the closest point to the mouse
+    let closestPoint = null
+    let minDistance = Infinity
+    
+    points.forEach(point => {
+      const distance = Math.sqrt(Math.pow(mouseX - point.x, 2) + Math.pow(mouseY - point.y, 2))
+      if (distance < minDistance && distance < 40) { // 40px threshold in viewBox coordinates
+        minDistance = distance
+        closestPoint = point
+      }
+    })
+    
+    if (closestPoint) {
+      setHoveredPoint(closestPoint)
+      // Position tooltip at the point location (in percentage of container)
+      setTooltipPosition({ 
+        x: (closestPoint.x / width) * 100, 
+        y: (closestPoint.y / height) * 100 
+      })
+    } else {
+      setHoveredPoint(null)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    setHoveredPoint(null)
+  }
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <svg 
+        width='100%' 
+        height={height} 
+        viewBox={`0 0 ${width} ${height}`} 
+        preserveAspectRatio='none' 
+        style={{ display: 'block', minHeight: `${height}px` }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        <path
+          d={pathString}
+          fill='none'
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+        {/* Small dots at each data point */}
+        {points.map((point, i) => (
+          <circle
+            key={i}
+            cx={point.x}
+            cy={point.y}
+            r={1.8}
+            fill='#000'
+            style={{ pointerEvents: 'none' }}
+          />
+        ))}
+      </svg>
+      {/* Tooltip */}
+      {hoveredPoint && (
+        <div
+          style={{
+            position: 'absolute',
+            left: `${tooltipPosition.x}%`,
+            top: `${tooltipPosition.y}%`,
+            transform: 'translate(-50%, -120%)',
+            backgroundColor: '#333',
+            color: '#fff',
+            padding: '6px 10px',
+            borderRadius: 6,
+            fontSize: 12,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 1000,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+          }}
+        >
+          <div style={{ fontWeight: 600 }}>{hoveredPoint.label}</div>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>Value: {hoveredPoint.value.toLocaleString()}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Card({ title, children, span = 1, style = {}, onClick, isDesktop = true }) {
   const basePadding = isDesktop ? 24 : 12
   return (
