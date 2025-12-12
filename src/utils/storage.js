@@ -83,6 +83,26 @@ export const getAuthCode = async () => {
   }
 }
 
+// Save login credentials
+export const saveLoginCredentials = async (email, password) => {
+  localStorage.setItem('login_email', email);
+  localStorage.setItem('login_password', password);
+};
+
+// Retrieve login credentials
+export const getLoginCredentials = async () => {
+  return {
+    email: localStorage.getItem('login_email') || '',
+    password: localStorage.getItem('login_password') || '',
+  };
+};
+
+// Clear if needed later (optional)
+export const clearLoginCredentials = async () => {
+  localStorage.removeItem('login_email');
+  localStorage.removeItem('login_password');
+};
+
 /**
  * Removes the Authorization Code from both cookie and localStorage
  * Used when user logs out or authentication fails

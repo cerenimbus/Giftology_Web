@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthorizeUser } from '../utils/api';
 import { getAuthCode } from '../utils/storage.js';
+import { saveLoginCredentials } from '../utils/storage.js';
 
 /** ✅ Giftology logo */
 function GiftologyLogo({ width }) {
@@ -112,6 +113,8 @@ export default function Login() {
         Language: 'EN',
       });
       if (res?.success) {
+        // Save for Verify screen
+        await saveLoginCredentials(email, password);
         // AuthorizeUser doesn't return an AC - that comes from AuthorizeDeviceID
         // Just navigate to verify screen where user will enter security code
         navigate('/verify');

@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthorizeDeviceID } from '../utils/api';
 import { setAuthCode, removeAuthCode } from '../utils/storage';
 import './Verify.css';
+import { getLoginCredentials } from '../utils/storage.js';
 
 export default function Verify() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    (async () => {
+      const creds = await getLoginCredentials();
+      setEmail(creds.email || '');
+      setPassword(creds.password || '');
+      console.log('Loaded credentials:', creds.email, creds.password);
+    })();
+  }, []);
 
   const onSubmit = async () => {
     if (code.length !== 6) return;
@@ -15,7 +27,14 @@ export default function Verify() {
     setLoading(true);
     try {
       // Use the user-entered 6-digit security code
-      const res = await AuthorizeDeviceID({ SecurityCode: code });
+      const res = await AuthorizeDeviceID({
+        SecurityCode: code,
+        UserName: email,
+        Password: password,
+        DeviceID: localStorage.getItem("DeviceID"),
+        Date: localStorage.getItem("Date"),
+        Key: localStorage.getItem("AuthKey")
+      });
 
       if (res?.success) {
         // Extract the Authorization Code from the <Auth> tag in the response

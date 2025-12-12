@@ -21,6 +21,9 @@ const BASE = import.meta.env.VITE_API_BASE
   ? String(import.meta.env.VITE_API_BASE)
   : (import.meta.env.DEV ? '/RRService' : DEFAULT_REMOTE)
 
+// Hardcoded mobile version for all API calls
+const MOBILE_VERSION = '1'
+
 // compute SHA1 hex digest
 function sha1(str) {
   return CryptoJS.SHA1(str || '').toString(CryptoJS.enc.Hex)
@@ -88,22 +91,42 @@ export async function fetchWithTimeout(url, options = {}, timeout = 15000) {
 
 // central caller used by exported API functions
 // returns { success, errorNumber, message, raw, parsed, requestUrl }
-export async function callService(functionName, extraParams = {}, paramOrder = null) {
+export async function callService(functionName, extraParams = {}, paramOrder = null, options = {}) {
   console.log(`[callService] Starting API call: ${functionName}`)
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' })
   const deviceId = (await getDeviceId()) || ''
   const ac = (await getAuthCode()) || ''
 
   console.log(`[callService] DeviceID: ${deviceId ? 'present' : 'missing'}, AC: ${ac ? 'present' : 'missing'}`)
+  console.log(`[callService] extraParams:`, extraParams)
 
   const d = new Date()
   const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}-${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 
   // Historically the mobile client used sha1(deviceId + dateStr)
   // Server spec describes including the AC but some endpoints/tests expect the short form.
-  const key = sha1(deviceId + dateStr)
+  // Use Date and Key from extraParams if provided (e.g., for AuthorizeDeviceID), otherwise calculate them
+  const finalDate = extraParams.Date || dateStr
+  const finalKey = extraParams.Key || sha1(deviceId + finalDate + ac)
 
-  const params = Object.assign({ DeviceID: deviceId, Date: dateStr, Key: key, AC: ac }, extraParams)
+  // Build base params - skip AC for AuthorizeDeviceID (not in spec)
+  // If encodeDeviceID option is set and DeviceID is not in extraParams, encode it
+  let baseDeviceID = deviceId
+  if (options.encodeDeviceID && !extraParams.DeviceID) {
+    baseDeviceID = encodeURIComponent(deviceId)
+  }
+  
+  const baseParams = { DeviceID: baseDeviceID, Date: finalDate, Key: finalKey }
+  if (!options.skipAC && ac) {
+    baseParams.AC = ac
+  }
+
+  // Start with base params, then merge extraParams (which may override DeviceID, Date, Key, and add UserName, Password, etc.)
+  const params = Object.assign(baseParams, extraParams)
+  console.log(`[callService] Final params keys:`, Object.keys(params))
+  console.log(`[callService] UserName:`, params.UserName ? 'present' : 'missing', params.UserName)
+  console.log(`[callService] Password:`, params.Password ? 'present' : 'missing', params.Password ? '***' : '')
+  console.log(`[callService] paramOrder:`, paramOrder)
   const url = buildUrl(functionName, params, paramOrder)
 
   console.log(`[callService] Request URL: ${url.replace(/([&?]AC=)[^&]*/, '$1***')}`)
@@ -192,9 +215,57 @@ export async function AuthorizeUser(payload) {
   return callService('AuthorizeUser', params, paramOrder)
 }
 
-export async function AuthorizeDeviceID({ SecurityCode }) {
-  return callService('AuthorizeDeviceID', { SecurityCode })
+export async function AuthorizeDeviceID(payload) {
+  // According to spec: DeviceID, UserName, and Password must be URLENCODED
+  // Key = SHA-1(DeviceID + Date + AuthorizationCode) - should be provided by caller
+  // Date = MM/DD/YYYY-HH:mm - should be provided by caller
+  
+  // Get DeviceID from payload or fallback to getDeviceId() (will be handled by callService)
+  const deviceId = payload.DeviceID || null
+  
+  const params = {
+    UserName: payload.UserName || '', // Don't URL encode - server expects @ symbol unencoded
+    Password: payload.Password || '', // Don't URL encode
+    Language: payload.Language || 'EN',
+    MobileVersion: payload.MobileVersion || payload.GiftologyVersion || '1',
+    SecurityCode: payload.SecurityCode, // 6 digit code
+  }
+  
+  // Only include Date and Key if they're actually provided (not undefined/null/empty)
+  // Otherwise, callService will calculate them
+  if (payload.Date && payload.Date !== 'null' && payload.Date !== 'undefined') {
+    params.Date = payload.Date // MM/DD/YYYY-HH:mm supplied by caller
+  }
+  if (payload.Key && payload.Key !== 'null' && payload.Key !== 'undefined') {
+    params.Key = payload.Key   // SHA-1(DeviceID + Date + AuthorizationCode) - supplied by caller
+  }
+  
+  // URL encode DeviceID if provided in payload (per spec requirement)
+  if (deviceId) {
+    params.DeviceID = encodeURIComponent(deviceId)
+  }
+
+  // Matches required API parameter order (based on working example):
+  // DeviceID, Date, Key, UserName, Password, Language, MobileVersion, SecurityCode
+  const paramOrder = [
+    'DeviceID',
+    'Date',
+    'Key',
+    'UserName',
+    'Password',
+    'Language',
+    'MobileVersion',
+    'SecurityCode'
+  ]
+
+  // For AuthorizeDeviceID, we don't want AC in the URL (not in spec)
+  // If DeviceID wasn't provided, callService will add it from getDeviceId() and we'll encode it there
+  return callService('AuthorizeDeviceID', params, paramOrder, { skipAC: true, encodeDeviceID: !deviceId })
 }
+
+// export async function AuthorizeDeviceID({ SecurityCode }) {
+//   return callService('AuthorizeDeviceID', { SecurityCode })
+// }
 
 // Helper to parse formatted numbers (removes commas, spaces, currency symbols, etc.)
 function parseFormattedNumber(str) {
@@ -328,9 +399,19 @@ export async function GetDashboard() {
   return { success: true, data }
 }
 
+// export async function GetTaskList() {
+//   const r = await callService('GetTaskList')
+//   if (!r.success) return r
+//   const sel = r.parsed?.Selections || {}
+//   const list = Array.isArray(sel?.Task)
+//     ? sel.Task.map(t => ({ name: textOf(t?.Name) || textOf(t?.TaskName), serial: Number(textOf(t?.Serial || t?.TaskSerial) || 0), contact: textOf(t?.Contact) || textOf(t?.Name), date: textOf(t?.Date), status: Number(textOf(t?.Status || 0)) }))
+//     : (sel?.Task ? [{ name: textOf(sel.Task?.Name) || textOf(sel.Task?.TaskName), serial: Number(textOf(sel.Task?.Serial || sel.Task?.TaskSerial) || 0), contact: textOf(sel.Task?.Contact) || textOf(sel.Task?.Name), date: textOf(sel.Task?.Date), status: Number(textOf(sel.Task?.Status || 0)) }] : [])
+//   return { success: true, data: list }
+// }
 export async function GetTaskList() {
-  const r = await callService('GetTaskList')
+  const r = await callService('GetTaskList', { MobileVersion: MOBILE_VERSION })
   if (!r.success) return r
+  console.log('GetTaskList response:', r)
   const sel = r.parsed?.Selections || {}
   const list = Array.isArray(sel?.Task)
     ? sel.Task.map(t => ({ name: textOf(t?.Name) || textOf(t?.TaskName), serial: Number(textOf(t?.Serial || t?.TaskSerial) || 0), contact: textOf(t?.Contact) || textOf(t?.Name), date: textOf(t?.Date), status: Number(textOf(t?.Status || 0)) }))
