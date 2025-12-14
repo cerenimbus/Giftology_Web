@@ -501,19 +501,114 @@ export async function GetDashboard() {
     partner
   })
   
+  // Helper to recursively extract all tasks from nested structure
+  const extractAllTasks = (taskObj, depth = 0) => {
+    const tasks = []
+    if (!taskObj || typeof taskObj !== 'object' || depth > 20) return tasks // Safety limit
+    
+    // Extract task data if this object has task properties
+    const hasTaskData = taskObj.Name || taskObj.TaskSerial || taskObj.ContactSerial
+    if (hasTaskData) {
+      // Extract date from nested TaskName structure
+      // The structure can be: TaskName.TaskName.Date or TaskName.Date or Date
+      let date = textOf(taskObj?.Date)
+      if (!date && taskObj?.TaskName) {
+        // Try TaskName.TaskName.Date (most common nested structure)
+        if (taskObj.TaskName?.TaskName?.Date) {
+          date = textOf(taskObj.TaskName.TaskName.Date)
+        } 
+        // Try TaskName.Date
+        else if (taskObj.TaskName?.Date) {
+          date = textOf(taskObj.TaskName.Date)
+        }
+        // Try TaskName.TaskName as a string/number
+        else if (taskObj.TaskName?.TaskName && (typeof taskObj.TaskName.TaskName === 'string' || typeof taskObj.TaskName.TaskName === 'number')) {
+          // This might be the date itself
+          date = String(taskObj.TaskName.TaskName)
+        }
+      }
+      
+      // Extract taskName (type) from TaskName structure
+      // TaskName might be a string, or an object with nested structure
+      let taskName = ''
+      if (taskObj?.TaskName) {
+        if (typeof taskObj.TaskName === 'string' || typeof taskObj.TaskName === 'number') {
+          taskName = String(taskObj.TaskName)
+        } else if (typeof taskObj.TaskName === 'object') {
+          // Try to extract text from TaskName object
+          taskName = textOf(taskObj.TaskName)
+        }
+      }
+      
+      // Also check for Type field (if it exists)
+      const type = textOf(taskObj?.Type) || taskName || ''
+      
+      const taskData = {
+        name: textOf(taskObj?.Name) || '',
+        taskSerial: textOf(taskObj?.TaskSerial),
+        contactSerial: textOf(taskObj?.ContactSerial),
+        taskName: taskName || '',
+        type: type, // Alias for taskName to match Dashboard fallback structure
+        date: date || '',
+      }
+      
+      // Only add if we have at least a name or taskSerial
+      if (taskData.name || taskData.taskSerial) {
+        tasks.push(taskData)
+      }
+    }
+    
+    // Recursively extract from nested Task objects
+    // Check for Task.TaskName.Task structure (most common)
+    if (taskObj?.TaskName?.Task) {
+      const nestedTasks = extractAllTasks(taskObj.TaskName.Task, depth + 1)
+      tasks.push(...nestedTasks)
+    }
+    
+    // Also check for direct Task property
+    if (taskObj?.Task && taskObj.Task !== taskObj) { // Avoid infinite recursion
+      const nestedTasks = extractAllTasks(taskObj.Task, depth + 1)
+      tasks.push(...nestedTasks)
+    }
+    
+    return tasks
+  }
+  
+  // Log the raw Task structure for debugging
+  console.log('[GetDashboard] Raw Task structure:', JSON.stringify(sel?.Task, null, 2))
+  
+  // Extract all tasks from the nested structure
+  let allTasks = []
+  if (Array.isArray(sel?.Task)) {
+    // If Task is an array, process each one
+    sel.Task.forEach((task, idx) => {
+      console.log(`[GetDashboard] Processing Task array item ${idx}:`, task)
+      const extracted = extractAllTasks(task)
+      console.log(`[GetDashboard] Extracted ${extracted.length} tasks from item ${idx}`)
+      allTasks.push(...extracted)
+    })
+  } else if (sel?.Task) {
+    // If Task is a single object, extract recursively
+    console.log('[GetDashboard] Processing single Task object')
+    allTasks = extractAllTasks(sel.Task)
+  }
+  
+  console.log('[GetDashboard] Total extracted tasks count:', allTasks.length)
+  console.log('[GetDashboard] Extracted tasks:', JSON.stringify(allTasks, null, 2))
+  
   // Map a compact JS object expected by UI (matching mobile structure)
   const data = {
     // Web-specific property names (for backward compatibility)
     bestReferralPartners: Array.isArray(sel?.BestPartner) ? sel.BestPartner.map(b => ({ name: textOf(b?.Name), contactSerial: textOf(b?.ContactSerial), amount: textOf(b?.Amount) })) : (sel?.BestPartner ? [{ name: textOf(sel.BestPartner?.Name), contactSerial: textOf(sel.BestPartner?.ContactSerial), amount: textOf(sel.BestPartner?.Amount) }] : []),
     currentRunawayRelationships: Array.isArray(sel?.Current) ? sel.Current.map(c => ({ name: textOf(c?.Name), contactSerial: textOf(c?.ContactSerial), phone: textOf(c?.Phone) })) : (sel?.Current ? [{ name: textOf(sel.Current?.Name), contactSerial: textOf(sel.Current?.ContactSerial), phone: textOf(sel.Current?.Phone) }] : []),
     recentlyIdentifiedPartners: Array.isArray(sel?.Recent) ? sel.Recent.map(r => ({ name: textOf(r?.Name), contactSerial: textOf(r?.ContactSerial), phone: textOf(r?.Phone) })) : (sel?.Recent ? [{ name: textOf(sel.Recent?.Name), contactSerial: textOf(sel.Recent?.ContactSerial), phone: textOf(sel.Recent?.Phone) }] : []),
-    tasks: Array.isArray(sel?.Task) ? sel.Task.map(t => ({ name: textOf(t?.Name) || textOf(t?.TaskName), taskSerial: textOf(t?.TaskSerial), contactSerial: textOf(t?.ContactSerial), taskName: textOf(t?.TaskName), date: textOf(t?.Date) })) : (sel?.Task ? [{ name: textOf(sel.Task?.Name) || textOf(sel.Task?.TaskName), taskSerial: textOf(sel.Task?.TaskSerial), contactSerial: textOf(sel.Task?.ContactSerial), taskName: textOf(sel.Task?.TaskName), date: textOf(sel.Task?.Date) }] : []),
+    tasks: allTasks,
     
     // Mobile-compatible property names
     bestPartner: Array.isArray(sel?.BestPartner) ? sel.BestPartner.map(b => ({ Name: textOf(b?.Name), ContactSerial: textOf(b?.ContactSerial), Amount: textOf(b?.Amount) })) : (sel?.BestPartner ? [{ Name: textOf(sel.BestPartner?.Name), ContactSerial: textOf(sel.BestPartner?.ContactSerial), Amount: textOf(sel.BestPartner?.Amount) }] : []),
     current: Array.isArray(sel?.Current) ? sel.Current.map(c => ({ Name: textOf(c?.Name), ContactSerial: textOf(c?.ContactSerial), Phone: textOf(c?.Phone) })) : (sel?.Current ? [{ Name: textOf(sel.Current?.Name), ContactSerial: textOf(sel.Current?.ContactSerial), Phone: textOf(sel.Current?.Phone) }] : []),
     recent: Array.isArray(sel?.Recent) ? sel.Recent.map(r => ({ Name: textOf(r?.Name), ContactSerial: textOf(r?.ContactSerial), Phone: textOf(r?.Phone) })) : (sel?.Recent ? [{ Name: textOf(sel.Recent?.Name), ContactSerial: textOf(sel.Recent?.ContactSerial), Phone: textOf(sel.Recent?.Phone) }] : []),
-    tasksSummary: Array.isArray(sel?.Task) ? sel.Task.map(t => ({ name: textOf(t?.Name) || textOf(t?.TaskName), taskSerial: textOf(t?.TaskSerial), contactSerial: textOf(t?.ContactSerial), taskName: textOf(t?.TaskName), date: textOf(t?.Date) })) : (sel?.Task ? [{ name: textOf(sel.Task?.Name) || textOf(sel.Task?.TaskName), taskSerial: textOf(sel.Task?.TaskSerial), contactSerial: textOf(sel.Task?.ContactSerial), taskName: textOf(sel.Task?.TaskName), date: textOf(sel.Task?.Date) }] : []),
+    tasksSummary: allTasks,
     
     // DOV data - extract from nested structure or root level
     datesDov: {

@@ -215,6 +215,20 @@ export default function Dashboard() {
     const n = toNumber(v)
     return n === 0 ? '$0' : `$${n.toLocaleString()}`
   }
+  const formatTaskDate = (dateStr) => {
+    if (!dateStr) return ''
+    try {
+      const parts = String(dateStr).split(/[-\/]/)
+      if (parts.length === 3) {
+        const date = new Date(parts[2], parts[0] - 1, parts[1])
+        if (!isNaN(date.getTime())) {
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+          return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+        }
+      }
+    } catch (e) {}
+    return dateStr
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa' }}>
@@ -378,13 +392,16 @@ export default function Dashboard() {
             </Card>
 
             <Card title='Task' onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {d.tasks.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderRadius: 6, backgroundColor: '#fff0f0' }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderBottom: i < d.tasks.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                     <input type='checkbox' style={{ marginRight: 12 }} disabled />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
-                      <div style={{ color: '#666', fontSize: 13 }}>{t.taskName || t.type || ''} · {t.date}</div>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
+                        <div style={{ color: '#666', fontSize: 13 }}>{t.taskName || t.type || ''}</div>
+                      </div>
+                      <div style={{ color: '#666', fontSize: 13 }}>{formatTaskDate(t.date)}</div>
                     </div>
                   </div>
                 ))}
