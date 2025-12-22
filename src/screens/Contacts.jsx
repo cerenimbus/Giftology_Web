@@ -1,15 +1,47 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { GetContactList } from '../utils/api'
 import './Contacts.css'
 
-const DATA = new Array(12).fill(0).map((_, i) => ({
-  id: String(i),
-  name: ['Charly Oman', 'Jhon de rosa', 'Martin Mayers', 'kent Mayers', 'kerk Mayers', 'Allen Mayers', 'willma Mayers', 'Alexander Ace', 'kent Mayers', 'kent Mayers'][i % 10],
-  status: ['Potential Partner', 'Runway', 'Referral Partner', 'Potential Partner', 'Runway', 'Referral Partner', 'Potential Partner', 'Runway', 'Referral Partner', 'Potential Partner'][i % 10],
-  phone: '(225) 555-0118'
-}))
-
 export default function Contacts() {
+  const [contacts, setContacts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const result = await GetContactList({ Language: 'EN' })
+        
+        if (result.success && result.data) {
+          // Map API response to component format
+          // API returns: name, serial, status
+          // Component expects: id, name, status, phone
+          const mappedContacts = result.data.map((contact, index) => ({
+            id: String(contact.serial || index),
+            name: contact.name || '',
+            status: contact.status || '',
+            phone: '' // Phone not available in API response
+          }))
+          setContacts(mappedContacts)
+        } else {
+          setError(result.message || 'Failed to load contacts')
+          setContacts([])
+        }
+      } catch (err) {
+        console.error('Error fetching contacts:', err)
+        setError(err.message || 'An error occurred while loading contacts')
+        setContacts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchContacts()
+  }, [])
+
   return (
     <div className="contacts-page">
       {/* Left Sidebar */}
@@ -88,25 +120,41 @@ export default function Contacts() {
       <main className="contacts-content">
         <h1 className="contacts-title">Contacts</h1>
         
-        <div className="contacts-table">
-          {/* Table Headers */}
-          <div className="table-header">
-            <div className="header-cell header-name">Name</div>
-            <div className="header-cell header-status">Status</div>
-            <div className="header-cell header-phone">Phone</div>
+        {loading && (
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading contacts...</div>
+        )}
+        
+        {error && (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+            Error: {error}
           </div>
+        )}
+        
+        {!loading && !error && (
+          <div className="contacts-table">
+            {/* Table Headers */}
+            <div className="table-header">
+              <div className="header-cell header-name">Name</div>
+              <div className="header-cell header-status">Status</div>
+              <div className="header-cell header-phone">Phone</div>
+            </div>
 
-          {/* Table Rows */}
-          <div className="table-body">
-            {DATA.map((item) => (
-              <div key={item.id} className="table-row">
-                <div className="table-cell cell-name">{item.name}</div>
-                <div className="table-cell cell-status">{item.status}</div>
-                <div className="table-cell cell-phone">{item.phone}</div>
-              </div>
-            ))}
+            {/* Table Rows */}
+            <div className="table-body">
+              {contacts.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center' }}>No contacts found</div>
+              ) : (
+                contacts.map((item) => (
+                  <div key={item.id} className="table-row">
+                    <div className="table-cell cell-name">{item.name}</div>
+                    <div className="table-cell cell-status">{item.status}</div>
+                    <div className="table-cell cell-phone">{item.phone || 'N/A'}</div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   )

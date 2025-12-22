@@ -306,7 +306,7 @@ export default function Dashboard() {
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(env(safe-area-inset-top, 12px) + 10px) 16px 10px', background: '#fff', borderBottom: '1px solid #f0f0f0', position: 'fixed', left: 0, right: 0, top: 0, zIndex: 70 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ fontWeight: 700, color: '#e84b4b' }}>GIFT·OLOGY</div>
-            <div style={{ color: '#999' }}>Relationship Radar</div>
+            <div style={{ color: '#999' }}>ROR</div>
           </div>
 
           <div>

@@ -66,7 +66,7 @@ export default function Verify() {
     <div className="verify-page">
       <main className="verify-content">
         <div className="relationship-radar-section">
-          <h1 className="relationship-radar-title">Relationship Radar</h1>
+          <h1 className="relationship-radar-title">ROR</h1>
           <p className="powered-by">Powered by:</p>
         </div>
 

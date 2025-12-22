@@ -97,7 +97,7 @@ export default function LoadingScreen({ duration = 2500, onFinish }) {
 
         {/* Left-aligned Text */}
         <div style={styles.textBlock}>
-          <div style={styles.relationTitle}>Relationship Radar</div>
+          <div style={styles.relationTitle}>ROR</div>
           <div style={styles.powered}>Powered by:</div>
         </div>
 

@@ -160,7 +160,7 @@ export default function Login() {
       {/* Header */}
       <div style={currentStyles.headerWrap}>
         <div style={styles.headerTop}>
-          <div style={styles.relationTitle}>Relationship Radar</div>
+          <div style={styles.relationTitle}>ROR</div>
           <div style={styles.powered}>Powered by:</div>
         </div>
         {/* Pass dynamic width to logo */}

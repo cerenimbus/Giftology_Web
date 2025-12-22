@@ -44,7 +44,7 @@ export default function ForgotPassword() {
       <main className="forgot-password-content">
         {/* Relationship Radar Section */}
         <div className="relationship-radar-section">
-          <h1 className="relationship-radar-title">Relationship Radar</h1>
+          <h1 className="relationship-radar-title">ROR</h1>
           <p className="powered-by">Powered by:</p>
         </div>
 

@@ -601,8 +601,15 @@ export async function GetDOVDateList() {
   return { success: true, data: { harmless: mapArr('Harmless'), greenlight: mapArr('Greenlight'), clarity: mapArr('Clarity') } }
 }
 
-export async function GetContactList() {
-  const r = await callService('GetContactList')
+export async function GetContactList(payload = {}) {
+  // GetContactList requires: DeviceID (URL encoded), Date, Key, AC, Language, MobileVersion
+  const params = {
+    Language: payload.Language || 'EN',
+    MobileVersion: payload.MobileVersion || MOBILE_VERSION,
+    ...payload,
+  }
+  // DeviceID should be URL encoded per spec
+  const r = await callService('GetContactList', params, null, { encodeDeviceID: true })
   if (!r.success) return r
   const sel = r.parsed?.Selections || {}
   const list = Array.isArray(sel?.Contact)
