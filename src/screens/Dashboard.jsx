@@ -4,17 +4,12 @@
  * - Desktop (>=900px): fixed left sidebar + content area
  */
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  DashboardIcon,
-  ReportsIcon,
-  CalendarIcon,
-  ContactsIcon,
-  HelpIcon,
-  FeedbackIcon,
-} from '../components/Icons'
+import { useNavigate, useLocation } from 'react-router-dom'
+import HamburgerMenu from '../components/HamburgerMenu'
+import Sidebar from '../components/Sidebar'
 import { GetDashboard } from '../utils/api'
-import { removeAuthCode } from '../utils/storage';
+import { removeAuthCode } from '../utils/storage'
+import { getMenuItems } from '../utils/menuConfig.jsx'
 
 function getCols(width = 1200) {
   // Mobile phones/tablets (<=900px): single column for better readability
@@ -24,29 +19,11 @@ function getCols(width = 1200) {
   return 3
 }
 
-const menuItems = [
-  { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon size={16} color='#e84b4b' /> },
-  { key: 'tasks', label: 'Tasks', path: '/tasks', icon: <DashboardIcon size={16} /> },
-  { key: 'dov', label: 'DOV & Dates', path: '/dov', icon: <CalendarIcon size={16} /> },
-  { key: 'partners', label: 'Potential Partners', path: '/contacts', icon: <ContactsIcon size={16} /> },
-  { key: 'reports', label: 'Reports', path: '/reports', icon: <ReportsIcon size={16} /> },
-  { key: 'help', label: 'Help', path: '/help', icon: <HelpIcon size={16} /> },
-  { key: 'feedback', label: 'Feedback', path: '/feedback', icon: <FeedbackIcon size={16} /> },
-  { key: 'setup', label: 'Setup CRM Integration', path: '/setup', icon: <HelpIcon size={16} /> },
-  { key: 'logout', label: ' ← Logout' },
-]
-
-const hamburgerButton = { padding: 8, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer' }
-const hamburgerLine = { height: 3, width: 22, background: '#333', margin: '3px 0', borderRadius: 2 }
-const sideItem = { padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }
-const mobileMenuOverlay = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 60 }
-const mobileMenuInner = { position: 'absolute', right: 12, top: 56, background: '#fff', minWidth: 220, borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.12)', padding: 8, zIndex: 80 }
-
 export default function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 900)
   const [cols, setCols] = useState(getCols(window.innerWidth))
-  const [showMenu, setShowMenu] = useState(false)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
 
@@ -205,6 +182,17 @@ export default function Dashboard() {
     navigate('/login');   // or '/login' depending on your routing
   };
 
+  /**
+   * Handles menu item clicks from the hamburger menu
+   */
+  const handleMenuClick = (item) => {
+    if (item.key === 'logout') {
+      handleLogout();
+    } else {
+      navigate(item.path);
+    }
+  };
+
   const toNumber = (v) => {
     if (v === undefined || v === null) return 0
     const n = Number(String(v).replace(/[^0-9.-]+/g, ''))
@@ -235,84 +223,10 @@ export default function Dashboard() {
 
       {/* Sidebar visible on desktop */}
       {isDesktop && (
-        <aside style={{ width: 280, backgroundColor: '#fff', borderRight: '1px solid #eee', height: '100vh', position: 'fixed' }}>
-          <div style={{ backgroundColor: '#e84b4b', padding: 8, margin: 16, borderRadius: 3 }}>
-            <div style={{ border: '1.6px solid #fff', borderRadius: 2, padding: 12, textAlign: 'center', fontWeight: 700, color: '#fff', fontSize: 22 }}>
-              GIFT·OLOGY<sub style={{ fontSize: 8, verticalAlign: '0.01em' }}>®</sub>
-            </div>
-          </div>
-
-          <div style={{ color: '#999', padding: '0 16px 8px', fontSize: 13 }}>Discover</div>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', backgroundColor: '#fdf2f2', borderLeft: '4px solid #e84b4b', fontWeight: 600, color: '#e84b4b', gap: 8 }}>
-            <DashboardIcon size={16} color='#e84b4b' />
-            <span style={{ fontSize: 14 }}>Dashboard</span>
-          </div>
-
-          <div style={sideItem} onClick={() => navigate('/reports')}>
-            <ReportsIcon size={16} color='#333' />
-            <span style={{ fontSize: 14 }}>Reports</span>
-          </div>
-          <div style={sideItem} onClick={() => navigate('/dov')}>
-            <CalendarIcon size={16} color='#333' />
-            <span style={{ fontSize: 14 }}>Dates & DOV</span>
-          </div>
-          <div style={sideItem} onClick={() => navigate('/contacts')}>
-            <ContactsIcon size={16} color='#333' />
-            <span style={{ fontSize: 14 }}>Contacts</span>
-          </div>
-          <div style={sideItem} onClick={() => navigate('/help')}>
-            <HelpIcon size={16} color='#333' />
-            <span style={{ fontSize: 14 }}>Help</span>
-          </div>
-          <div style={sideItem} onClick={() => navigate('/feedback')}>
-            <FeedbackIcon size={16} color='#333' />
-            <span style={{ fontSize: 14 }}>Feedback</span>
-          </div>
-          <div style={sideItem} onClick={() => navigate('/setup')}>
-            <HelpIcon size={16} color='#333' />
-            <span style={{ fontSize: 14 }}>Setup CRM Integration</span>
-          </div>
-          {/* <div style={sideItem} onClick={handleLogout}>
-            <span style={{ fontSize: 14 }}>Logout</span>
-          </div> */}
-          <div 
-            style={{
-              marginTop: 20,
-              padding: '0 16px',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <button 
-              onClick={handleLogout}
-              style={{
-                width: '100%',
-                backgroundColor: '#e84b4b',
-                color: '#fff',
-                padding: '12px 16px',
-                borderRadius: 6,
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                transition: 'transform 0.15s ease, background-color 0.2s ease',
-                
-              }}
-             
-            >
-              
-                <>
-                  <span style={{ fontSize: 16 }}>←</span>
-                  Logout
-                </>
-              
-            </button>
-          </div>
-        </aside>
+        <Sidebar 
+          onItemClick={handleMenuClick}
+          currentPath={location.pathname}
+        />
       )}
 
       {/* Mobile/header (fixed) */}
@@ -324,51 +238,14 @@ export default function Dashboard() {
           </div>
 
           <div>
-            <button aria-label='Open navigation' onClick={() => setShowMenu(s => !s)} style={hamburgerButton}>
-              <div style={hamburgerLine} />
-              <div style={hamburgerLine} />
-              <div style={hamburgerLine} />
-            </button>
+            <HamburgerMenu 
+              menuItems={getMenuItems()}
+              onItemClick={handleMenuClick}
+              isDesktop={isDesktop}
+              currentPath={location.pathname}
+            />
           </div>
         </header>
-      )}
-
-      {/* Mobile popover menu under header */}
-      {!isDesktop && showMenu && (
-        <div style={mobileMenuOverlay} onClick={() => setShowMenu(false)}>
-          <div style={mobileMenuInner} onClick={(e) => e.stopPropagation()} role='menu' aria-label='Mobile navigation'>
-            <div style={{ padding: 10, borderBottom: '1px solid #f0f0f0', marginBottom: 6 }}>
-              <div style={{ backgroundColor: '#e84b4b', padding: 8, borderRadius: 4, marginBottom: 8 }}>
-                <div style={{ border: '1.6px solid #fff', borderRadius: 2, padding: 8, textAlign: 'center', fontWeight: 700, color: '#fff', fontSize: 16 }}>GIFT·OLOGY<sub style={{ fontSize: 8, verticalAlign: '0.01em' }}>®</sub></div>
-              </div>
-              <div style={{ color: '#999', fontSize: 13 }}>Discover</div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {menuItems.map(item => (
-                <button
-                  key={item.key}
-                  onClick={() => {
-                    setShowMenu(false);
-
-                    if (item.key === 'logout') {
-                      handleLogout();       // ← runs your logout logic
-                    } else {
-                      navigate(item.path);  // ← normal navigation
-                    }
-                  }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', cursor: 'pointer', border: 'none', background: 'transparent', textAlign: 'left', borderRadius: 8
-                  }}
-                  role="menuitem"
-                >
-                  {item.icon}
-                  <span style={{ fontSize: 14 }}>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Main content area (offset for sidebar on desktop, pushed below header on mobile) */}

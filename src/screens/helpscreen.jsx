@@ -7,8 +7,11 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import giftologyLogo from "./assets/giftology.png";
+import { useNavigate, useLocation } from "react-router-dom";
+import HamburgerMenu from '../components/HamburgerMenu';
+import Sidebar from '../components/Sidebar';
+import { getMenuItems } from '../utils/menuConfig.jsx';
+import { removeAuthCode } from '../utils/storage';
 
 // Icons for sidebar
 // import {
@@ -23,6 +26,7 @@ import giftologyLogo from "./assets/giftology.png";
 // This is the main function for the Help Screen
 export default function HelpScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if the screen is wide enough to show the sidebar
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
@@ -43,13 +47,49 @@ export default function HelpScreen() {
     };
   }, []);
 
+  const handleLogout = async () => {
+    await removeAuthCode();
+    navigate('/login');
+  };
+
+  const handleMenuClick = (item) => {
+    if (item.key === 'logout') {
+      handleLogout();
+    } else {
+      navigate(item.path);
+    }
+  };
+
   return (
     <div style={styles.page}>
+      {/* Mobile/header (fixed) */}
+      {!isDesktop && (
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(env(safe-area-inset-top, 12px) + 10px) 16px 10px', background: '#fff', borderBottom: '1px solid #f0f0f0', position: 'fixed', left: 0, right: 0, top: 0, zIndex: 70 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontWeight: 700, color: '#e84b4b' }}>GIFT·OLOGY</div>
+            <div style={{ color: '#999' }}>ROR</div>
+          </div>
+          <div>
+            <HamburgerMenu 
+              menuItems={getMenuItems()}
+              onItemClick={handleMenuClick}
+              isDesktop={isDesktop}
+              currentPath={location.pathname}
+            />
+          </div>
+        </header>
+      )}
+
       {/* Show sidebar only if screen is big */}
-      {isDesktop && <Sidebar navigate={navigate} />}
+      {isDesktop && (
+        <Sidebar 
+          onItemClick={handleMenuClick}
+          currentPath={location.pathname}
+        />
+      )}
 
       {/* Main content on the right side */}
-      <main style={styles.main}>
+      <main style={{...styles.main, paddingTop: !isDesktop ? 'calc(env(safe-area-inset-top, 12px) + 72px)' : styles.main.paddingTop}}>
         <h1 style={styles.title}>Help Screen</h1>
 
         {/* Section 1 */}
@@ -103,48 +143,6 @@ export default function HelpScreen() {
   );
 }
 
-// Sidebar on the left side
-function Sidebar({ navigate }) {
-  return (
-    <aside style={styles.sidebar}>
-      {/* Logo at the top */}
-      <div style={styles.logoContainer}>
-        <img src={giftologyLogo} alt="Giftology Logo" style={styles.logoImage} />
-      </div>
-
-      {/* Menu section title */}
-      <div style={styles.menuHeader}>Discover</div>
-
-      {/* Menu items list */}
-      <MenuItem text="Dashboard" onClick={() => navigate("/dashboard")} />
-      <MenuItem text="Reports" onClick={() => navigate("/reports")} />
-      <MenuItem text="Dates & DOV" onClick={() => navigate("/dov")} />
-      <MenuItem text="Contacts" onClick={() => navigate("/contacts")} />
-      <MenuItem text="Help" active={true} onClick={() => navigate("/help")} />
-      <MenuItem text="Feedback" onClick={() => navigate("/feedback")} />
-      <MenuItem text="Setup CRM Integration" onClick={() => navigate("/setup")} />
-    </aside>
-  );
-}
-
-// Each menu button in the sidebar
-function MenuItem({ icon, text, onClick, active }) {
-  let itemStyle = { ...styles.menuItem };
-
-  // If the item is active (selected), change the style color
-  if (active === true) {
-    itemStyle.backgroundColor = "#fdf2f2";
-    itemStyle.borderLeft = "0.25rem solid #e84b4b";
-    itemStyle.color = "#e84b4b";
-  }
-
-  return (
-    <div onClick={onClick} style={itemStyle}>
-      {icon}
-      <span>{text}</span>
-    </div>
-  );
-}
 
 // Page styles (like CSS but inside JavaScript)
 const styles = {

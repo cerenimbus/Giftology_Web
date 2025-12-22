@@ -1,21 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GetUserInfo } from '../utils/api';
+import HamburgerMenu from '../components/HamburgerMenu';
+import Sidebar from '../components/Sidebar';
+import { getMenuItems } from '../utils/menuConfig.jsx';
+import { removeAuthCode } from '../utils/storage';
 
 export default function Setup() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userInfo, setUserInfo] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 900);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsDesktop(window.innerWidth >= 900);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleLogout = async () => {
+    await removeAuthCode();
+    navigate('/login');
+  };
+
+  const handleMenuClick = (item) => {
+    if (item.key === 'logout') {
+      handleLogout();
+    } else {
+      navigate(item.path);
+    }
+  };
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -409,80 +431,34 @@ export default function Setup() {
         .setup-nav-menu::-webkit-scrollbar-thumb:hover { background: rgba(232, 75, 75, 0.5); }
       `}</style>
 
+      {/* Mobile/header (fixed) */}
+      {!isDesktop && (
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(env(safe-area-inset-top, 12px) + 10px) 16px 10px', background: '#fff', borderBottom: '1px solid #f0f0f0', position: 'fixed', left: 0, right: 0, top: 0, zIndex: 70 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontWeight: 700, color: '#e84b4b' }}>GIFT·OLOGY</div>
+            <div style={{ color: '#999' }}>ROR</div>
+          </div>
+          <div>
+            <HamburgerMenu 
+              menuItems={getMenuItems()}
+              onItemClick={handleMenuClick}
+              isDesktop={isDesktop}
+              currentPath={location.pathname}
+            />
+          </div>
+        </header>
+      )}
+
       {/* Left Sidebar */}
-      <aside style={sidebarStyles}>
-        {/* Logo */}
-        <div style={logoStyles}>
-          GIFT·OLOGY<sup>®</sup>
-        </div>
-
-        {/* Navigation Header */}
-        {!isMobile && <div style={navHeaderStyles}>Discover</div>}
-
-        {/* Navigation Menu */}
-        <nav className="setup-nav-menu" style={navMenuStyles}>
-          <Link to="/dashboard" style={navItemStyles}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 3H19C19.5523 3 20 3.44772 20 4V20C20 20.5523 19.5523 21 19 21H5C4.44772 21 4 20.5523 4 20V4C4 3.44772 4.44772 3 5 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9 7L12 4L15 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9 11L12 8L15 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span style={navTextStyles}>Dashboard</span>
-          </Link>
-          <Link to="/reports" style={navItemStyles}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="6" cy="6" r="2" fill="currentColor"/>
-              <line x1="10" y1="6" x2="20" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="6" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="6" y1="18" x2="20" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span style={navTextStyles}>Reports</span>
-          </Link>
-          <Link to="/dov" style={navItemStyles}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <line x1="6" y1="8" x2="18" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="6" y1="16" x2="18" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span style={navTextStyles}>Dates & DOV</span>
-          </Link>
-          <Link to="/contacts" style={navItemStyles}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" strokeDasharray="2 2"/>
-              <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
-              <path d="M7 18C7 15.7909 9.23858 14 12 14C14.7614 14 17 15.7909 17 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span style={navTextStyles}>Contacts</span>
-          </Link>
-          <Link to="/help" style={navItemStyles}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-              <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span style={navTextStyles}>Help</span>
-          </Link>
-          <Link to="/feedback" style={navItemStyles}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 2L22 6L14 14L10 14L10 10L18 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M10 14L14 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4 20L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span style={navTextStyles}>Feedback</span>
-          </Link>
-          <Link to="/setup" style={{...navItemStyles, ...navItemActive}}>
-            <svg style={iconStyles} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span style={navTextStyles}>Setup CRM Integration</span>
-          </Link>
-        </nav>
-      </aside>
+      {isDesktop && (
+        <Sidebar 
+          onItemClick={handleMenuClick}
+          currentPath={location.pathname}
+        />
+      )}
 
       {/* Main Content */}
-      <main style={contentStyles}>
+      <main style={{...contentStyles, paddingTop: !isDesktop ? 'calc(env(safe-area-inset-top, 12px) + 72px)' : undefined}}>
         <h1 style={styles.title}>Setup CRM Integration</h1>
         <div style={styles.card}>
           <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>Giftology KEAP Setup</h2>
