@@ -264,7 +264,7 @@ export default function Dashboard() {
               {d.bestReferralPartners.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.amount} />)}
             </Card>
 
-            <Card title='Current Run away Relationships' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
+            <Card title='Current Runway Relationships' span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               {d.currentRunawayRelationships.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.phone} rightColor='#999' />)}
             </Card>
 

@@ -193,6 +193,8 @@ export default function Setup() {
         useremail: userInfo?.email
       })
     });
+  console.log('API Body:', { subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email });
+  console.log('API Response:', response);
   
     const responseText = await response.text();
   
