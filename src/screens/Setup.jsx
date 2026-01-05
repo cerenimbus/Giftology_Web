@@ -460,7 +460,16 @@ export default function Setup() {
       )}
 
       {/* Main Content */}
-      <main style={{...contentStyles, paddingTop: !isDesktop ? 'calc(env(safe-area-inset-top, 12px) + 72px)' : undefined}}>
+      <main style={{
+        ...contentStyles,
+        paddingTop: !isDesktop ? 'calc(env(safe-area-inset-top, 12px) + 72px)' : 40,
+        paddingLeft: isDesktop ? 40 : 16,
+        paddingRight: isDesktop ? 40 : 16,
+        paddingBottom: 40,
+        marginLeft: isDesktop ? 280 : 0,
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
         <h1 style={styles.title}>Setup CRM Integration</h1>
         <div style={styles.card}>
           <h2 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>Giftology KEAP Setup</h2>
