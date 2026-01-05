@@ -1,3 +1,4 @@
+
 /**
  * Cookie helper functions for managing browser cookies
  * 

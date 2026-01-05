@@ -1,3 +1,4 @@
+
 // Minimal timeout handler for web — called when API requests time out.
 export function handleApiTimeout() {
   try {

@@ -1,3 +1,4 @@
+// RHCM: 12/19/2025
 import React from 'react'
 
 export default class ErrorBoundary extends React.Component {

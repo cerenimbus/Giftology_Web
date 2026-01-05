@@ -1,3 +1,4 @@
+/* RHCM: 11/21/2025 */
 /*
  * RRService API client (browser-compatible)
  * Implements signed requests and parsing of XML responses for the Giftology

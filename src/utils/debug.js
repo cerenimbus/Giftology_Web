@@ -1,3 +1,4 @@
+// RHCM: 12/19/2025
 // Very small debug helpers used across the app.
 export function log(...args) {
   try { console.log('[debug]', ...args) } catch(e){}

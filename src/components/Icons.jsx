@@ -1,3 +1,4 @@
+// RHCM: Created on 2026-01-05
 import React from 'react'
 
 const IconWrapper = ({ children, size = 16 }) => (

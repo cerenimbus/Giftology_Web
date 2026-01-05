@@ -194,8 +194,20 @@ export default function Login() {
             onClick={() => setPasswordVisible((v) => !v)}
             style={styles.passwordToggle}
             aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+            title={passwordVisible ? 'Hide password' : 'Show password'}
           >
-            {passwordVisible ? 'Hide' : 'Show'}
+            {passwordVisible ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M17.94 17.94C16.12 19.11 14.12 19.8 12 19.8C7 19.8 3.11 16.6 1.5 12C2.57 9.09 4.4 6.76 6.81 5.07" stroke="#777" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9.53 9.53C9.2 9.86 9 10.35 9 10.9C9 11.8 9.8 12.6 10.7 12.6C11.25 12.6 11.74 12.4 12.07 12.07" stroke="#777" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 2L22 22" stroke="#777" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 5C7 5 3.11 8.2 1.5 12C3.11 15.8 7 19 12 19C17 19 20.89 15.8 22.5 12C20.89 8.2 17 5 12 5Z" stroke="#777" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="12" cy="12" r="3" stroke="#777" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </button>
         </div>
         <label style={styles.label}>By logging into the system you agree to receive multi-factor-authentication by text message, data and message rates may apply.</label>

@@ -1,3 +1,4 @@
+
 # Giftology Web - Verify Page
 
 A responsive ReactJS web application for the Giftology verification page.
