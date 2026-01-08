@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [cols, setCols] = useState(getCols(window.innerWidth))
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
+  const [checkedTasks, setCheckedTasks] = useState(new Set())
 
   useEffect(() => {
     function onResize() {
@@ -271,8 +272,21 @@ export default function Dashboard() {
             <Card title='Task' onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {d.tasks.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderBottom: i < d.tasks.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
-                    <input type='checkbox' style={{ marginRight: 12 }} disabled />
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderBottom: i < d.tasks.length - 1 ? '1px solid #f0f0f0' : 'none' }} onClick={(e) => e.stopPropagation()}>
+                    <input 
+                      type='checkbox' 
+                      style={{ marginRight: 12 }} 
+                      checked={checkedTasks.has(i)}
+                      onChange={(e) => {
+                        const newChecked = new Set(checkedTasks)
+                        if (e.target.checked) {
+                          newChecked.add(i)
+                        } else {
+                          newChecked.delete(i)
+                        }
+                        setCheckedTasks(newChecked)
+                      }}
+                    />
                     <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
