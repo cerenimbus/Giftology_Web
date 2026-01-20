@@ -17,6 +17,25 @@ export default function Contacts() {
   const [error, setError] = useState(null)
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 900)
 
+  const textOf = (v) => {
+    if (v === undefined || v === null) return ''
+    if (typeof v === 'string' || typeof v === 'number') return String(v)
+    if (typeof v === 'object') {
+      if ('#text' in v) return String(v['#text'])
+      for (const k of Object.keys(v)) {
+        const val = v[k]
+        if (typeof val === 'string' || typeof val === 'number') return String(val)
+        if (val && typeof val === 'object' && ('#text' in val)) return String(val['#text'])
+      }
+    }
+    return ''
+  }
+
+  const toArray = (maybe) => {
+    if (!maybe) return []
+    return Array.isArray(maybe) ? maybe : [maybe]
+  }
+
   useEffect(() => {
     function onResize() {
       setIsDesktop(window.innerWidth >= 900)
@@ -44,20 +63,48 @@ export default function Contacts() {
         setLoading(true)
         setError(null)
         const result = await GetContactList({ Language: 'EN' })
-        
-        if (result.success && result.data) {
-          // Map API response to component format
-          // API returns: name, serial, status
-          // Component expects: id, name, status, phone
-          const mappedContacts = result.data.map((contact, index) => ({
+
+        // 1) Preferred: use api.js mapped list if present
+        const listFromData = (result?.success && Array.isArray(result.data)) ? result.data : []
+
+        // 2) Fallback: parse directly from raw/parsed response (still only GetContactList)
+        // Some responses may nest contacts under different keys/casing.
+        const parsed = result?.parsed || result?.raw || {}
+        const selections = parsed?.Selections || parsed?.selections || parsed?.ResultInfo?.Selections || {}
+        const contactNodes =
+          selections?.Contact ||
+          selections?.contact ||
+          parsed?.Contact ||
+          parsed?.contact ||
+          []
+
+        const listFromParsed = toArray(contactNodes).map((c) => ({
+          name: textOf(c?.Name || c?.name),
+          serial: Number(textOf(c?.Serial || c?.serial)) || 0,
+          status: textOf(c?.Status || c?.status),
+        }))
+
+        const bestList = (listFromData.length > 0) ? listFromData : listFromParsed
+
+        // Always try to display any contacts we can parse, even if API reports an error.
+        if (bestList.length > 0) {
+          const mappedContacts = bestList.map((contact, index) => ({
             id: String(contact.serial || index),
             name: contact.name || '',
             status: contact.status || '',
-            phone: '' // Phone not available in API response
+            phone: '' // Phone not provided by GetContactList
           }))
           setContacts(mappedContacts)
+
+          // If API reported an error, still surface the message but keep showing data.
+          if (result && !result.success) {
+            setError(result.message || 'There was an issue loading contacts, showing latest available list.')
+          }
         } else {
-          setError(result.message || 'Failed to load contacts')
+          // No contacts found anywhere
+          if (result && !result.success) {
+            setError(result.message || 'Failed to load contacts')
+          }
           setContacts([])
         }
       } catch (err) {
@@ -102,7 +149,25 @@ export default function Contacts() {
 
       {/* Main Content */}
       <main className="contacts-content" style={{ paddingTop: !isDesktop ? 'calc(env(safe-area-inset-top, 12px) + 72px)' : undefined }}>
-        <h1 className="contacts-title">Contacts</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 12 }}>
+          <h1 className="contacts-title" style={{ marginBottom: 0 }}>Contacts</h1>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 999,
+              border: '1px solid #e0e0e0',
+              backgroundColor: '#ffffff',
+              cursor: 'pointer',
+              fontSize: 14,
+              color: '#555',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+            }}
+          >
+            Back
+          </button>
+        </div>
         
         {loading && (
           <div style={{ padding: '20px', textAlign: 'center' }}>Loading contacts...</div>
