@@ -15,21 +15,14 @@ export default function Tasks() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 900)
 
   useEffect(() => {
-    function onResize() {
-      setIsDesktop(window.innerWidth >= 900)
-    }
+    function onResize() { setIsDesktop(window.innerWidth >= 900) }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  const handleLogout = async () => {
-    await removeAuthCode()
-    navigate('/login')
-  }
-
   const handleMenuClick = (item) => {
     if (item.key === 'logout') {
-      handleLogout()
+      removeAuthCode().then(() => navigate('/login'))
     } else {
       navigate(item.path)
     }
@@ -50,14 +43,14 @@ export default function Tasks() {
   }, [])
 
   const onToggleDone = async (task) => {
-    // Ask for confirmation
+    // Re-added the snackbar/confirmation logic
     const ok = window.confirm('Are you sure you want to mark this task completed?')
     if (!ok) return
+
     setUpdating(true)
     try {
       const res = await UpdateTask({ Task: task.serial, Status: 1 })
       if (res?.success) {
-        // reload task list
         const r = await GetTaskList()
         if (r?.success) setTasks(r.data || [])
       } else {
@@ -68,57 +61,123 @@ export default function Tasks() {
     } finally { setUpdating(false) }
   }
 
+  const formatTaskDate = (dateStr) => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa', flexDirection: 'column' }}>
-      {/* Mobile/header (fixed) */}
-      {!isDesktop && (
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'calc(env(safe-area-inset-top, 12px) + 10px) 16px 10px', background: '#fff', borderBottom: '1px solid #f0f0f0', position: 'fixed', left: 0, right: 0, top: 0, zIndex: 70 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontWeight: 700, color: '#e84b4b' }}>GIFT·OLOGY</div>
-            <div style={{ color: '#999' }}>ROR</div>
-          </div>
-          <div>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fff', flexDirection: 'column' }}>
+      
+      {/* 1. TOP NAVIGATION & CENTERED RED TITLE */}
+      <div style={{ padding: '20px 20px 0 20px', textAlign: 'center', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            style={{ background: 'transparent', border: 'none', fontSize: '16px', color: '#666', cursor: 'pointer', zIndex: 10 }}
+          >
+            ← Back
+          </button>
+          
+          <div style={{ zIndex: 10 }}>
             <HamburgerMenu 
-              menuItems={getMenuItems()}
-              onItemClick={handleMenuClick}
-              isDesktop={isDesktop}
-              currentPath={location.pathname}
+              menuItems={getMenuItems()} 
+              onItemClick={handleMenuClick} 
+              isDesktop={isDesktop} 
+              currentPath={location.pathname} 
             />
           </div>
-        </header>
-      )}
-
-      <div style={{ padding: 20, paddingTop: isDesktop ? 20 : 'calc(env(safe-area-inset-top, 12px) + 72px)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          {isDesktop && (
-            <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#333', cursor: 'pointer' }}>← Back</button>
-          )}
-          <h1 style={{ color: '#e84b4b', margin: 0 }}>Tasks</h1>
-          {isDesktop && <div style={{ width: 24 }} />}
         </div>
 
-      <div style={{ marginTop: 12 }}>
+        {/* Large Centered Red Title from image_833230.png */}
+        <h1 style={{ 
+          fontSize: '42px', 
+          fontWeight: '800', 
+          color: '#e84b4b', 
+          margin: '-35px 0 30px 0', 
+          letterSpacing: '-1px'
+        }}>
+          Tasks
+        </h1>
+      </div>
+
+      {/* 2. DATA CONTAINER */}
+      <div style={{ 
+        maxWidth: '900px', 
+        width: '95%', 
+        margin: '0 auto', 
+        padding: '20px', 
+        backgroundColor: '#fff', 
+        borderRadius: '15px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)' 
+      }}>
+        
+        {/* Black Title at Upper Left of Data list */}
+        <div style={{ 
+          textAlign: 'left', 
+          fontWeight: '700', 
+          fontSize: '20px', 
+          marginBottom: '15px',
+          color: '#000'
+        }}>
+          Task
+        </div>
+
         {loading ? (
-          <div>Loading tasks…</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>Loading tasks...</div>
         ) : tasks.length === 0 ? (
-          <div>No tasks found</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>No tasks found</div>
         ) : (
-          <div style={{ display: 'grid', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {tasks.map((t) => (
-              <div key={String(t.serial)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 10, background: '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{t.name}</div>
-                  <div style={{ color: '#666', fontSize: 13 }}>{t.contact} · {t.date}</div>
+              <div 
+                key={String(t.serial)} 
+                style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '45px 1fr 1fr 70px', 
+                  alignItems: 'center', 
+                  padding: '18px 0', 
+                  borderTop: '1px solid #f1f1f1',
+                  opacity: updating ? 0.6 : 1 // Visual feedback during update
+                }}
+              >
+                {/* Checkbox for Completion */}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    disabled={updating}
+                    onChange={() => onToggleDone(t)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#e84b4b' }}
+                  />
                 </div>
-                <div>
-                  <button disabled={updating} onClick={() => onToggleDone(t)} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#e84b4b', color: '#fff', cursor: 'pointer' }}>{updating ? 'Updating...' : 'Mark Done'}</button>
+
+                {/* Contact (Centered) */}
+                <div style={{ fontWeight: '500', color: '#333', textAlign: 'center' }}>
+                  {t.contact}
+                </div>
+
+                {/* Task Name (Centered) */}
+                <div style={{ color: '#555', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 10px' }}>
+                  {t.name}
+                </div>
+
+                {/* Date (Right Aligned) */}
+                <div style={{ color: '#bbb', textAlign: 'right', fontSize: '14px' }}>
+                  {formatTaskDate(t.date)}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-      </div>
+
+      {/* Updating overlay for better UX */}
+      {updating && (
+        <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#333', color: '#fff', padding: '12px 20px', borderRadius: '8px', zIndex: 100, fontSize: '14px' }}>
+          Updating task list...
+        </div>
+      )}
     </div>
   )
 }
