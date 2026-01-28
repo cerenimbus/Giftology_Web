@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import HamburgerMenu from '../components/HamburgerMenu'
 import Sidebar from '../components/Sidebar'
-import { GetDashboard } from '../utils/api'
+import { GetDashboard, GetTaskList } from '../utils/api'
 import { removeAuthCode } from '../utils/storage'
 import { getMenuItems } from '../utils/menuConfig.jsx'
 
@@ -53,6 +53,14 @@ export default function Dashboard() {
           message: r?.message,
         })
         
+        // Also fetch tasks from GetTaskList for consistency with Tasks screen
+        console.log('[Dashboard] 📞 Calling GetTaskList API...')
+        const tasksResult = await GetTaskList()
+        console.log('[Dashboard] 📥 GetTaskList returned:', {
+          success: tasksResult?.success,
+          dataLength: tasksResult?.data?.length || 0,
+        })
+        
         if (mounted) {
           if (r?.success && r?.data) {
             console.log('[Dashboard] ✅ API Response Success!')
@@ -66,8 +74,13 @@ export default function Dashboard() {
             console.log('[Dashboard] Best Partners Count:', r.data.bestReferralPartners?.length || 0)
             console.log('[Dashboard] Current Relationships Count:', r.data.currentRunawayRelationships?.length || 0)
             console.log('[Dashboard] Recent Partners Count:', r.data.recentlyIdentifiedPartners?.length || 0)
-            console.log('[Dashboard] Tasks Count:', r.data.tasks?.length || 0)
-            setData(r.data)
+            // Use tasks from GetTaskList if available, otherwise use dashboard tasks
+            const dashboardData = {
+              ...r.data,
+              tasks: tasksResult?.success && tasksResult?.data ? tasksResult.data : r.data.tasks || []
+            }
+            console.log('[Dashboard] Tasks Count:', dashboardData.tasks?.length || 0)
+            setData(dashboardData)
             console.log('[Dashboard] ✅ Data set successfully!')
           } else {
             console.warn('[Dashboard] ❌ GetDashboard failed!')
@@ -206,17 +219,8 @@ export default function Dashboard() {
   }
   const formatTaskDate = (dateStr) => {
     if (!dateStr) return ''
-    try {
-      const parts = String(dateStr).split(/[-\/]/)
-      if (parts.length === 3) {
-        const date = new Date(parts[2], parts[0] - 1, parts[1])
-        if (!isNaN(date.getTime())) {
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-          return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
-        }
-      }
-    } catch (e) {}
-    return dateStr
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   return (
@@ -250,8 +254,8 @@ export default function Dashboard() {
       )}
 
       {/* Main content area (offset for sidebar on desktop, pushed below header on mobile) */}
-      <main style={{ flex: 1, paddingTop: isDesktop ? 40 : 'calc(env(safe-area-inset-top, 12px) + 72px)', paddingLeft: isDesktop ? 40 : 16, paddingRight: isDesktop ? 40 : 16, paddingBottom: 40, marginLeft: isDesktop ? 280 : 0, width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, paddingTop: isDesktop ? 40 : 'calc(env(safe-area-inset-top, 12px) + 72px)', paddingLeft: isDesktop ? 40 : 16, paddingRight: isDesktop ? 40 : 16, paddingBottom: 40, marginLeft: isDesktop ? 280 : 0, width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           {loading && (
             <div style={{ position: 'absolute', left: 0, right: 0, top: 64, display: 'flex', justifyContent: 'center', zIndex: 40 }}>
               <div style={{ background: '#fff', padding: '6px 12px', borderRadius: 999, boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>Loading dashboard…</div>
@@ -269,34 +273,22 @@ export default function Dashboard() {
               {d.currentRunawayRelationships.slice(0, 4).map((x, i) => <Row key={i} left={x.name} right={x.phone} rightColor='#999' />)}
             </Card>
 
-            <Card title='Task' onClick={() => navigate('/tasks')} style={{ cursor: 'pointer' }} span={cols === 1 ? 1 : 1} isDesktop={isDesktop}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {d.tasks.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px 6px', borderBottom: i < d.tasks.length - 1 ? '1px solid #f0f0f0' : 'none' }} onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type='checkbox' 
-                      style={{ marginRight: 12 }} 
-                      checked={checkedTasks.has(i)}
-                      onChange={(e) => {
-                        const newChecked = new Set(checkedTasks)
-                        if (e.target.checked) {
-                          newChecked.add(i)
-                        } else {
-                          newChecked.delete(i)
-                        }
-                        setCheckedTasks(newChecked)
-                      }}
-                    />
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{t.name || t.taskName}</div>
-                        <div style={{ color: '#666', fontSize: 13 }}>{t.taskName || t.type || ''}</div>
-                      </div>
-                      <div style={{ color: '#666', fontSize: 13 }}>{formatTaskDate(t.date)}</div>
+            <Card title='Task' style={{ cursor: 'pointer' }} span={cols === 1 ? 1 : 1} isDesktop={isDesktop} onClick={() => navigate('/tasks')}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }} onClick={() => navigate('/tasks')}>
+                {d.tasks.slice(0, 5).map((t, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 70px', alignItems: 'center', padding: '10px 6px', borderBottom: i < Math.min(d.tasks.length, 5) - 1 ? '1px solid #f0f0f0' : 'none', cursor: 'pointer' }}>
+                    <div style={{ fontWeight: '500', color: '#333', textAlign: 'center' }}>
+                      {t.contact}
+                    </div>
+                    <div style={{ color: '#555', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 10px' }}>
+                      {t.name}
+                    </div>
+                    <div style={{ color: '#bbb', textAlign: 'right', fontSize: '14px' }}>
+                      {formatTaskDate(t.date)}
                     </div>
                   </div>
                 ))}
-                <div style={{ marginTop: 12, textAlign: 'center', color: '#e84b4b', fontWeight: 600 }}>Open Tasks</div>
+                <div style={{ marginTop: 12, textAlign: 'center', color: '#e84b4b', fontWeight: 600, cursor: 'pointer' }}>Open Tasks</div>
               </div>
             </Card>
 

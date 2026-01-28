@@ -97,6 +97,13 @@ a.nav-item[aria-current="page"] {
   padding: clamp(1rem, 3vw, 2rem);
   background-color: #ffffff;
   width: 100%;
+  margin-left: 280px;
+}
+
+@media (max-width: 900px) {
+  .contacts-content {
+    margin-left: 0;
+  }
 }
 
 .contacts-title {
