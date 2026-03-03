@@ -84,13 +84,14 @@ export const getAuthCode = async () => {
   }
 }
 
-// Save login credentials
+// MG 3-3-2026
+// Save email/password for Verify screen only; verification message is passed via navigation state (not stored)
 export const saveLoginCredentials = async (email, password) => {
   localStorage.setItem('login_email', email);
   localStorage.setItem('login_password', password);
 };
 
-// Retrieve login credentials
+// Retrieve login credentials for Verify screen
 export const getLoginCredentials = async () => {
   return {
     email: localStorage.getItem('login_email') || '',

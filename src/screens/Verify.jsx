@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthorizeDeviceID } from '../utils/api';
 import { setAuthCode, removeAuthCode } from '../utils/storage';
 import './Verify.css';
@@ -12,6 +12,10 @@ export default function Verify() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  // MG 3-3-2026
+  // Verification message from login API, passed via nav state (same as mobile route.params)
+  const verificationMessage = location?.state?.verificationMessage ?? '';
 
   useEffect(() => {
     (async () => {
@@ -79,9 +83,8 @@ export default function Verify() {
 
         <div className="verify-card">
           <h2 className="verify-title">Verify</h2>
-          <p className="verify-instructions">
-            A security code is being texted to your phone. Enter the code below
-          </p>
+          {/* MG 3-3-2026: Show only API message on verify screen, no hardcoded text */}
+          <p className="verify-instructions">{verificationMessage}</p>
           <input
             type="text"
             value={code}
