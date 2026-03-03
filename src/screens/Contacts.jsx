@@ -208,7 +208,7 @@ export default function Contacts() {
             return {
               id: String(serial || idx),
               name: name || `Contact ${serial || idx}`,
-              status: status || 'N/A',
+              status: status || '',
               phone: phone || ''
             }
           })
@@ -464,7 +464,7 @@ export default function Contacts() {
           return {
             name: contactName,
             serial,
-            status: status || 'N/A',
+            status: status || '',
             phone: phone || ''
           }
         }).filter(c => {
@@ -551,13 +551,13 @@ export default function Contacts() {
           const mappedContacts = allContacts.map((contact, index) => {
             // Ensure we always have valid data for display
             const contactName = contact.name || contact.Name || `Contact ${contact.serial || index + 1}`
-            const contactStatus = contact.status || contact.Status || 'N/A'
+            const contactStatus = contact.status || contact.Status || ''
             const contactPhone = contact.phone || contact.Phone || ''
             
             return {
               id: String(contact.serial || contact.id || contact.Serial || `contact-${index}`),
               name: String(contactName).trim() || `Contact ${index + 1}`,
-              status: String(contactStatus).trim() || 'N/A',
+              status: String(contactStatus).trim() || '',
               phone: String(contactPhone).trim() || ''
             }
           })
@@ -589,7 +589,7 @@ export default function Contacts() {
               const unfiltered = allContacts.map((c, idx) => ({
                 id: `contact-${idx}`,
                 name: c.name || c.Name || `Contact ${idx + 1}`,
-                status: c.status || c.Status || 'N/A',
+                status: c.status || c.Status || '',
                 phone: c.phone || c.Phone || ''
               }))
               setContacts(unfiltered)
@@ -627,7 +627,7 @@ export default function Contacts() {
                 const mapped = result.data.map((c, idx) => ({
                   id: String(c.serial || c.id || idx),
                   name: c.name || 'Unknown',
-                  status: c.status || 'N/A',
+                  status: c.status || '',
                   phone: c.phone || ''
                 }))
                 setContacts(mapped)
@@ -648,7 +648,7 @@ export default function Contacts() {
                 setContacts([{
                   id: String(dataObj.serial || dataObj.Serial || dataObj.id || dataObj.ID || '1'),
                   name: dataObj.name || dataObj.Name || 'Unknown',
-                  status: dataObj.status || dataObj.Status || 'N/A',
+                  status: dataObj.status || dataObj.Status || '',
                   phone: dataObj.phone || dataObj.Phone || ''
                 }])
                 setError(null)
@@ -666,7 +666,7 @@ export default function Contacts() {
                     const mapped = value.map((c, idx) => ({
                       id: String(c.serial || c.Serial || c.id || c.ID || idx),
                       name: c.name || c.Name || 'Unknown',
-                      status: c.status || c.Status || 'N/A',
+                      status: c.status || c.Status || '',
                       phone: c.phone || c.Phone || ''
                     }))
                     setContacts(mapped)
@@ -730,7 +730,7 @@ export default function Contacts() {
       {/* Main Content */}
       <main className="contacts-content" style={{ paddingTop: !isDesktop ? 'calc(env(safe-area-inset-top, 12px) + 72px)' : undefined }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 12 }}>
-          <h1 className="contacts-title" style={{ marginBottom: 0 }}>Contacts</h1>
+          <h1 className="contacts-title" style={{ marginBottom: 0 }}>Potential Partners</h1>
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
@@ -786,9 +786,9 @@ export default function Contacts() {
               ) : (
                 contacts.map((item) => (
                   <div key={item.id} className="table-row">
-                    <div className="table-cell cell-name">{item.name || 'N/A'}</div>
-                    <div className="table-cell cell-status">{item.status || 'N/A'}</div>
-                    <div className="table-cell cell-phone">{item.phone || 'N/A'}</div>
+                    <div className="table-cell cell-name">{item.name || ''}</div>
+                    <div className="table-cell cell-status">{item.status || ''}</div>
+                    <div className="table-cell cell-phone">{item.phone || ''}</div>
                   </div>
                 ))
               )}
