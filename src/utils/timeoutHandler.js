@@ -1,10 +1,19 @@
 
-// Minimal timeout handler for web — called when API requests time out.
-export function handleApiTimeout() {
+// Timeout handler for web — called when API requests time out.
+// It dispatches a custom event that the React UI listens for and shows a modal.
+export function handleApiTimeout(info = {}) {
   try {
-    // In the mobile app this might show a modal; on web we can show an alert and
-    // optionally reload or navigate to login. Keep it conservative here.
-    // You can replace this with a nicer UX as needed.
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      const event = new CustomEvent('rrservice-timeout', { detail: info })
+      window.dispatchEvent(event)
+      return
+    }
+  } catch (e) {
+    // fall through to alert fallback below
+  }
+
+  // Fallback: show a simple alert if the event-based UI is not available.
+  try {
     // eslint-disable-next-line no-alert
     alert('The request timed out. Please check your connection and try again.')
   } catch (e) {

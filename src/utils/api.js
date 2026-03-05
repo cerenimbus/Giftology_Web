@@ -12,15 +12,17 @@ import { log, getDebugFlag, logError } from './debug'
 import { handleApiTimeout } from './timeoutHandler'
 
 // Default base URL for the RRService API. Use VITE_API_BASE to override.
-// In development we want to hit the Vite proxy to avoid browser CORS errors.
-// Behavior:
-//  - If VITE_API_BASE is set, use that value (explicit override).
-//  - Else if in DEV mode use the local proxy path `/RRService` (no CORS).
-//  - Otherwise default to the canonical remote service URL.
-const DEFAULT_REMOTE = 'https://radar.Giftologygroup.com/RRService'
+// IMPORTANT:
+//  - We use a *relative* path (`/RRService`) so this build can be deployed to
+//    multiple hostnames/environments (prod, test, dev, etc.) without change.
+//  - The browser will always call the RRService on the **same origin** as the
+//    loaded page (whatever domain it is hosted on).
+//  - If you ever need to point to a different host, set VITE_API_BASE at
+//    build time (e.g. `VITE_API_BASE="https://some.other.host/RRService"`).
+const DEFAULT_RELATIVE_BASE = '/RRService'
 const BASE = import.meta.env.VITE_API_BASE
   ? String(import.meta.env.VITE_API_BASE)
-  : (import.meta.env.DEV ? '/RRService' : DEFAULT_REMOTE)
+  : DEFAULT_RELATIVE_BASE
 
 // Hardcoded mobile version for all API calls
 const MOBILE_VERSION = '1'
@@ -193,12 +195,35 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
     return { success: result === 'success', errorNumber: err, message, raw: ri, parsed: ri, requestUrl: url }
   } catch (e) {
     console.error(`[callService] ❌ Error calling ${functionName}:`, e)
-    const isTimeout = (e && (e.name === 'AbortError' || String(e).toLowerCase().includes('timeout')))
-    if (getDebugFlag && getDebugFlag()) logError && logError(`[RRService] Error calling ${functionName}:`, e && e.stack ? e.stack : e)
-    if (isTimeout) {
-      try { handleApiTimeout() } catch (err) { /* ignore */ }
+    const isTimeout =
+      e && (e.name === 'AbortError' || String(e).toLowerCase().includes('timeout'))
+
+    if (getDebugFlag && getDebugFlag()) {
+      logError &&
+        logError(
+          `[RRService] Error calling ${functionName}:`,
+          e && e.stack ? e.stack : e,
+        )
     }
-    return { success: false, errorNumber: isTimeout ? 408 : 100, message: isTimeout ? 'Request timed out' : String(e), requestUrl: url }
+
+    if (isTimeout) {
+      try {
+        handleApiTimeout({
+          functionName,
+          message: 'Request timed out. Please check your connection and try again.',
+          requestUrl: url,
+        })
+      } catch (err) {
+        // ignore UI errors
+      }
+    }
+
+    return {
+      success: false,
+      errorNumber: isTimeout ? 100 : 100,
+      message: isTimeout ? 'Request timed out' : String(e),
+      requestUrl: url,
+    }
   }
 }
 

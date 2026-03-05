@@ -146,24 +146,10 @@ export default function Dashboard() {
     revenueGraph: data.revenueGraph || [],
     dovList: data.dovList || [],
   } : {
-    bestReferralPartners: [
-      { name: 'Jack Miller', amount: '$36,000' },
-      { name: 'Jhon de rosa', amount: '$22,425' },
-      { name: 'Martin Mayers', amount: '$17,089' },
-      { name: 'Kent Mayers', amount: '$11,298' },
-    ],
-    currentRunawayRelationships: [
-      { name: 'Lucas Mendoza', phone: '(225) 555-0118' },
-      { name: 'Ava Torres', phone: '(225) 555-0118' },
-      { name: 'Ethan Brooks', phone: '(225) 555-0118' },
-      { name: 'Sophia Ramirez', phone: '(225) 555-0118' },
-    ],
-    tasks: [
-      { name: 'James', type: 'Introduction', date: 'Sep 9' },
-      { name: 'Kharl', type: 'Clarity Conversation', date: 'Sep 14' },
-      { name: 'Jimmy', type: 'Gift', date: 'Sep 24' },
-      { name: 'Loren', type: 'DOV', date: 'Sep 26' },
-    ],
+    bestReferralPartners: [],
+    currentRunawayRelationships: [],
+    tasks: [],
+    recentlyIdentifiedPartners: [],
     datesDov: {
       harmlessStarters: 0,
       greenlightQuestions: 0,
@@ -175,11 +161,6 @@ export default function Dashboard() {
       totalDov: 0,
     },
     dovTotal: 0, // Mobile-compatible
-    recentlyIdentifiedPartners: [
-      { name: 'Charly Oman', phone: '(225) 555-0118' },
-      { name: 'Jhon de rosa', phone: '(225) 555-0118' },
-      { name: 'Martin Mayers', phone: '(225) 555-0118' },
-    ],
     outcomes: { introductions: 0, referrals: 0, referralPartners: 0, partners: 0 }, // Mobile uses 'partners'
     referralRevenue: 0,
     // Graph data (empty fallback)

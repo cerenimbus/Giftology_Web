@@ -8,12 +8,12 @@ export default defineConfig({
     // Proxy /RRService/* requests to the real API during development to avoid CORS
     proxy: {
       '/RRService': {
-        target: 'https://radar.Giftologygroup.com',
+        target: 'https://dev.ror.giftologygroup.com',
         changeOrigin: true,
         secure: false,
       },
       '/api/KEAP': {
-        target: 'https://radar.giftologygroup.com',
+        target: 'https://dev.ror.giftologygroup.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => {
@@ -31,5 +31,5 @@ export default defineConfig({
       },
     },
   },
-  base: '/dev/' // Set base path for hosting under /dev/
+  base: '/' // Set base path for hosting under /dev/
 })

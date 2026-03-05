@@ -13,6 +13,7 @@ import DOV from './screens/DOV'
 import Reports from './screens/Reports'
 import Feedback from './screens/Feedback'
 import Setup from './screens/Setup'
+import ApiTimeoutModal from './components/ApiTimeoutModal'
 
 function App() {
   const [showLoading, setShowLoading] = useState(true)
@@ -20,6 +21,9 @@ function App() {
   return (
     // use Vite's BASE_URL so local dev (/) and hosted /dev both work
     <Router basename={import.meta.env.BASE_URL || '/'}>
+      {/* Global API timeout modal */}
+      <ApiTimeoutModal />
+
       {showLoading ? (
         <LoadingScreen onFinish={() => setShowLoading(false)} />
       ) : (

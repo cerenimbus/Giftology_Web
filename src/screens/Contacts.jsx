@@ -148,9 +148,12 @@ export default function Contacts() {
         const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}-${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
         const key = CryptoJS.SHA1(deviceId + dateStr + ac).toString(CryptoJS.enc.Hex)
         
+        // Use a relative base URL so this build works on any host (prod/test/dev)
+        // without needing changes. If VITE_API_BASE is provided at build time,
+        // it will override this and can point to a different origin if needed.
         const BASE = import.meta.env.VITE_API_BASE
           ? String(import.meta.env.VITE_API_BASE)
-          : (import.meta.env.DEV ? '/RRService' : 'https://radar.Giftologygroup.com/RRService')
+          : '/RRService'
         
         const params = new URLSearchParams({
           DeviceID: encodeURIComponent(deviceId),
