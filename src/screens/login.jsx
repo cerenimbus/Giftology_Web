@@ -113,11 +113,10 @@ export default function Login() {
         Language: 'EN',
       });
       if (res?.success) {
-        // Save for Verify screen
+        // MG 3-3-2026
+        // Save credentials for Verify; pass API success message via nav state (same as mobile route params)
         await saveLoginCredentials(email, password);
-        // AuthorizeUser doesn't return an AC - that comes from AuthorizeDeviceID
-        // Just navigate to verify screen where user will enter security code
-        navigate('/verify');
+        navigate('/verify', { state: { verificationMessage: res?.message ?? '' } });
       } else {
         window.alert(`Sign in failed: ${res?.message || 'Unable to authorize employee'}`);
       }

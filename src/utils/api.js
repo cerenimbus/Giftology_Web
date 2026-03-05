@@ -96,8 +96,8 @@ export async function fetchWithTimeout(url, options = {}, timeout = 15000) {
 // returns { success, errorNumber, message, raw, parsed, requestUrl }
 export async function callService(functionName, extraParams = {}, paramOrder = null, options = {}) {
   console.log(`[callService] Starting API call: ${functionName}`)
-  const parser = new XMLParser({ 
-    ignoreAttributes: false, 
+  const parser = new XMLParser({
+    ignoreAttributes: false,
     attributeNamePrefix: '',
     textNodeName: '#text',
     parseTagValue: true,
@@ -128,7 +128,7 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
   if (options.encodeDeviceID && !extraParams.DeviceID) {
     baseDeviceID = encodeURIComponent(deviceId)
   }
-  
+
   const baseParams = { DeviceID: baseDeviceID, Date: finalDate, Key: finalKey }
   if (!options.skipAC && ac) {
     baseParams.AC = ac
@@ -152,7 +152,7 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
       if (masked.Key) masked.Key = mask(masked.Key)
       if (masked.DeviceID) masked.DeviceID = mask(masked.DeviceID)
       log(`[RRService] Request ${functionName} params:`, masked)
-      log(`[RRService] Request URL (masked AC):`, url.replace(/([&?]AC=)[^&]*/,'$1***'))
+      log(`[RRService] Request URL (masked AC):`, url.replace(/([&?]AC=)[^&]*/, '$1***'))
       log(`[RRService] Request URL (full):`, url)
     }
 
@@ -160,7 +160,7 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
     // Fetch with timeout
     const res = await fetchWithTimeout(url, {}, 30000)
     console.log(`[callService] Response status: ${res.status} ${res.statusText}`)
-    
+
     const txt = await res.text()
     console.log(`[callService] Response text length: ${txt.length} characters`)
     console.log(`[callService] Full Response XML:`, txt)
@@ -177,7 +177,7 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
         console.log(`[callService] Selections has DOV:`, 'DOV' in obj.ResultInfo.Selections)
       }
     }
-    
+
     const ri = obj?.ResultInfo || obj
     const err = Number(ri?.ErrorNumber) || 0
     const result = (ri?.Result || '').toLowerCase()
@@ -243,32 +243,49 @@ function textOf(v) {
   return ''
 }
 
+// 3/5/26
+// VC
 export async function AuthorizeUser(payload) {
-  // Build params for AuthorizeUser endpoint
   const deviceInfo = await getDeviceInfo()
+  const deviceId = await getDeviceId()
+
   const params = {
+    DeviceID: deviceId,
     DeviceType: payload.DeviceType || deviceInfo.DeviceType,
     DeviceModel: payload.DeviceModel || deviceInfo.DeviceModel,
     DeviceVersion: payload.DeviceVersion || deviceInfo.DeviceVersion,
     UserName: payload.UserName,
     Password: payload.Password,
     Language: payload.Language || 'EN',
-    MobileVersion: payload.MobileVersion || payload.GiftologyVersion || '1',
-    ...payload,
+    MobileVersion: payload.MobileVersion || '1',
   }
 
-  const paramOrder = ['DeviceID','DeviceType','DeviceModel','DeviceVersion','Date','Key','UserName','Password','Language','MobileVersion']
+  const paramOrder = [
+    'DeviceID',
+    'DeviceType',
+    'DeviceModel',
+    'DeviceVersion',
+    'Date',
+    'Key',
+    'UserName',
+    'Password',
+    'Language',
+    'MobileVersion'
+  ]
+
   return callService('AuthorizeUser', params, paramOrder)
 }
+
+//
 
 export async function AuthorizeDeviceID(payload) {
   // According to spec: DeviceID, UserName, and Password must be URLENCODED
   // Key = SHA-1(DeviceID + Date + AuthorizationCode) - should be provided by caller
   // Date = MM/DD/YYYY-HH:mm - should be provided by caller
-  
+
   // Get DeviceID from payload or fallback to getDeviceId() (will be handled by callService)
   const deviceId = payload.DeviceID || null
-  
+
   const params = {
     UserName: payload.UserName || '', // Don't URL encode - server expects @ symbol unencoded
     Password: payload.Password || '', // Don't URL encode
@@ -276,7 +293,7 @@ export async function AuthorizeDeviceID(payload) {
     MobileVersion: payload.MobileVersion || payload.GiftologyVersion || '1',
     SecurityCode: payload.SecurityCode, // 6 digit code
   }
-  
+
   // Only include Date and Key if they're actually provided (not undefined/null/empty)
   // Otherwise, callService will calculate them
   if (payload.Date && payload.Date !== 'null' && payload.Date !== 'undefined') {
@@ -285,7 +302,7 @@ export async function AuthorizeDeviceID(payload) {
   if (payload.Key && payload.Key !== 'null' && payload.Key !== 'undefined') {
     params.Key = payload.Key   // SHA-1(DeviceID + Date + AuthorizationCode) - supplied by caller
   }
-  
+
   // URL encode DeviceID if provided in payload (per spec requirement)
   if (deviceId) {
     params.DeviceID = encodeURIComponent(deviceId)
@@ -330,21 +347,21 @@ export async function GetDashboard() {
 
   const sel = r.parsed?.Selections || {}
   const rawParsed = r.parsed || {}
-  
+
   console.log('[GetDashboard] Selections keys:', Object.keys(sel))
   console.log('[GetDashboard] Selections structure:', sel)
   console.log('[GetDashboard] Selections structure (JSON):', JSON.stringify(sel, null, 2))
-  
+
   // Helper to recursively search for fields in nested structure
   const findFields = (obj, targetFields, depth = 0) => {
     if (!obj || typeof obj !== 'object' || depth > 15) return null
-    
+
     // Check if this object has any of the target fields
     const hasTargetField = targetFields.some(field => obj[field] !== undefined)
     if (hasTargetField) {
       return obj
     }
-    
+
     // Recursively search in nested objects
     for (const key in obj) {
       if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null && key !== '#text') {
@@ -352,20 +369,20 @@ export async function GetDashboard() {
         if (found) return found
       }
     }
-    
+
     return null
   }
 
   // Find DOV fields (HarmlessStarter, Greenlight, ClarityConvos, etc.) in the nested Task structure
   const dovFields = findFields(sel?.Task, ['HarmlessStarter', 'Greenlight', 'ClarityConvos', 'TotalDOV', 'Introduction', 'Referral', 'Partner']) || {}
-  
+
   // Find graph data (DOVGraph, RevenueGraph, DOV) in the nested Task structure
   const graphFields = findFields(sel?.Task, ['DOVGraph', 'RevenueGraph', 'DOV']) || {}
   console.log('[GetDashboard] Found graphFields:', graphFields)
   console.log('[GetDashboard] graphFields.DOVGraph:', graphFields?.DOVGraph)
   console.log('[GetDashboard] graphFields.RevenueGraph:', graphFields?.RevenueGraph)
   console.log('[GetDashboard] graphFields.DOV:', graphFields?.DOV)
-  
+
   // Also try direct deep access as fallback (based on the actual structure we saw in the JSON)
   // The path is: Task -> TaskName -> TaskName -> Task -> TaskName -> TaskName -> Task -> TaskName -> TaskName
   const deepGraphFields = sel?.Task?.TaskName?.TaskName?.Task?.TaskName?.TaskName?.Task?.TaskName?.TaskName || {}
@@ -384,26 +401,26 @@ export async function GetDashboard() {
     if (foundKey) return obj[foundKey]
     return undefined
   }
-  
+
   // Try Selections first, then the nested graphFields we found, then deep access
-  const dovGraphSource = findInObject(sel, 'DOVGraph') 
-    || findInObject(graphFields, 'DOVGraph') 
+  const dovGraphSource = findInObject(sel, 'DOVGraph')
+    || findInObject(graphFields, 'DOVGraph')
     || findInObject(deepGraphFields, 'DOVGraph')
-    || findInObject(rawParsed, 'DOVGraph') 
+    || findInObject(rawParsed, 'DOVGraph')
     || findInObject(rawParsed?.Selections, 'DOVGraph')
-  
-  const revenueGraphSource = findInObject(sel, 'RevenueGraph') 
+
+  const revenueGraphSource = findInObject(sel, 'RevenueGraph')
     || findInObject(graphFields, 'RevenueGraph')
     || findInObject(deepGraphFields, 'RevenueGraph')
-    || findInObject(rawParsed, 'RevenueGraph') 
+    || findInObject(rawParsed, 'RevenueGraph')
     || findInObject(rawParsed?.Selections, 'RevenueGraph')
-  
-  const dovSource = findInObject(sel, 'DOV') 
+
+  const dovSource = findInObject(sel, 'DOV')
     || findInObject(graphFields, 'DOV')
     || findInObject(deepGraphFields, 'DOV')
-    || findInObject(rawParsed, 'DOV') 
+    || findInObject(rawParsed, 'DOV')
     || findInObject(rawParsed?.Selections, 'DOV')
-  
+
   console.log('[GetDashboard] Final dovGraphSource:', dovGraphSource)
   console.log('[GetDashboard] Final revenueGraphSource:', revenueGraphSource)
   console.log('[GetDashboard] Final dovSource:', dovSource)
@@ -412,10 +429,10 @@ export async function GetDashboard() {
   const dovMap = {}
   const dovArrayRaw = dovSource || sel?.DOV
   const dovArray = Array.isArray(dovArrayRaw) ? dovArrayRaw : (dovArrayRaw ? [dovArrayRaw] : [])
-  
+
   console.log('[GetDashboard] DOV array raw:', dovArrayRaw)
   console.log('[GetDashboard] DOV array processed:', dovArray)
-  
+
   dovArray.forEach(dov => {
     const name = (textOf(dov?.Name) || '').toLowerCase().trim()
     const count = parseFormattedNumber(textOf(dov?.Count))
@@ -431,7 +448,7 @@ export async function GetDashboard() {
       }
     }
   })
-  
+
   // Create dovList for display
   const dovList = dovArray.map(dov => ({
     name: textOf(dov?.Name) || '',
@@ -444,20 +461,20 @@ export async function GetDashboard() {
       console.log('[GetDashboard] extractDataPoints: graphSource is null/undefined')
       return []
     }
-    
+
     console.log('[GetDashboard] extractDataPoints: graphSource type:', typeof graphSource, 'keys:', Object.keys(graphSource || {}))
-    
+
     // Handle different XML parser structures
     let dataPoints = []
-    
+
     // Try different possible property names (case variations)
-    const dataPointKey = Object.keys(graphSource).find(key => 
+    const dataPointKey = Object.keys(graphSource).find(key =>
       key.toLowerCase() === 'datapoint' || key === 'DataPoint'
     ) || 'DataPoint'
-    
+
     const dataPointValue = graphSource[dataPointKey]
     console.log('[GetDashboard] extractDataPoints: dataPointKey:', dataPointKey, 'dataPointValue:', dataPointValue)
-    
+
     // Case 1: DataPoint is an array
     if (Array.isArray(dataPointValue)) {
       dataPoints = dataPointValue
@@ -470,9 +487,9 @@ export async function GetDashboard() {
     else if (dataPointValue !== undefined && dataPointValue !== null) {
       console.warn('[GetDashboard] extractDataPoints: Unexpected DataPoint type:', typeof dataPointValue)
     }
-    
+
     console.log('[GetDashboard] extractDataPoints: extracted dataPoints array length:', dataPoints.length)
-    
+
     return dataPoints.map((dp, idx) => {
       const label = textOf(dp?.Label) || textOf(dp?.label) || ''
       const value = parseFormattedNumber(textOf(dp?.Value) || textOf(dp?.value))
@@ -516,7 +533,7 @@ export async function GetDashboard() {
   const introduction = getNumber(sel?.Introduction || dovFields?.Introduction || deepGraphFields?.Introduction)
   const referral = getNumber(sel?.Referral || dovFields?.Referral || deepGraphFields?.Referral)
   const partner = getNumber(sel?.Partner || dovFields?.Partner || deepGraphFields?.Partner)
-  
+
   console.log('[GetDashboard] Extracted DOV values:', {
     harmLessStarter,
     greenlight,
@@ -526,12 +543,12 @@ export async function GetDashboard() {
     referral,
     partner
   })
-  
+
   // Helper to recursively extract all tasks from nested structure
   const extractAllTasks = (taskObj, depth = 0) => {
     const tasks = []
     if (!taskObj || typeof taskObj !== 'object' || depth > 20) return tasks // Safety limit
-    
+
     // Extract task data if this object has task properties
     const hasTaskData = taskObj.Name || taskObj.TaskSerial || taskObj.ContactSerial
     if (hasTaskData) {
@@ -542,7 +559,7 @@ export async function GetDashboard() {
         // Try TaskName.TaskName.Date (most common nested structure)
         if (taskObj.TaskName?.TaskName?.Date) {
           date = textOf(taskObj.TaskName.TaskName.Date)
-        } 
+        }
         // Try TaskName.Date
         else if (taskObj.TaskName?.Date) {
           date = textOf(taskObj.TaskName.Date)
@@ -553,7 +570,7 @@ export async function GetDashboard() {
           date = String(taskObj.TaskName.TaskName)
         }
       }
-      
+
       // Extract taskName (type) from TaskName structure
       // TaskName might be a string, or an object with nested structure
       let taskName = ''
@@ -565,10 +582,10 @@ export async function GetDashboard() {
           taskName = textOf(taskObj.TaskName)
         }
       }
-      
+
       // Also check for Type field (if it exists)
       const type = textOf(taskObj?.Type) || taskName || ''
-      
+
       const taskData = {
         name: textOf(taskObj?.Name) || '',
         taskSerial: textOf(taskObj?.TaskSerial),
@@ -577,32 +594,32 @@ export async function GetDashboard() {
         type: type, // Alias for taskName to match Dashboard fallback structure
         date: date || '',
       }
-      
+
       // Only add if we have at least a name or taskSerial
       if (taskData.name || taskData.taskSerial) {
         tasks.push(taskData)
       }
     }
-    
+
     // Recursively extract from nested Task objects
     // Check for Task.TaskName.Task structure (most common)
     if (taskObj?.TaskName?.Task) {
       const nestedTasks = extractAllTasks(taskObj.TaskName.Task, depth + 1)
       tasks.push(...nestedTasks)
     }
-    
+
     // Also check for direct Task property
     if (taskObj?.Task && taskObj.Task !== taskObj) { // Avoid infinite recursion
       const nestedTasks = extractAllTasks(taskObj.Task, depth + 1)
       tasks.push(...nestedTasks)
     }
-    
+
     return tasks
   }
-  
+
   // Log the raw Task structure for debugging
   console.log('[GetDashboard] Raw Task structure:', JSON.stringify(sel?.Task, null, 2))
-  
+
   // Extract all tasks from the nested structure
   let allTasks = []
   if (Array.isArray(sel?.Task)) {
@@ -618,10 +635,10 @@ export async function GetDashboard() {
     console.log('[GetDashboard] Processing single Task object')
     allTasks = extractAllTasks(sel.Task)
   }
-  
+
   console.log('[GetDashboard] Total extracted tasks count:', allTasks.length)
   console.log('[GetDashboard] Extracted tasks:', JSON.stringify(allTasks, null, 2))
-  
+
   // Map a compact JS object expected by UI (matching mobile structure)
   const data = {
     // Web-specific property names (for backward compatibility)
@@ -629,13 +646,13 @@ export async function GetDashboard() {
     currentRunawayRelationships: Array.isArray(sel?.Current) ? sel.Current.map(c => ({ name: textOf(c?.Name), contactSerial: textOf(c?.ContactSerial), phone: textOf(c?.Phone) })) : (sel?.Current ? [{ name: textOf(sel.Current?.Name), contactSerial: textOf(sel.Current?.ContactSerial), phone: textOf(sel.Current?.Phone) }] : []),
     recentlyIdentifiedPartners: Array.isArray(sel?.Recent) ? sel.Recent.map(r => ({ name: textOf(r?.Name), contactSerial: textOf(r?.ContactSerial), phone: textOf(r?.Phone) })) : (sel?.Recent ? [{ name: textOf(sel.Recent?.Name), contactSerial: textOf(sel.Recent?.ContactSerial), phone: textOf(sel.Recent?.Phone) }] : []),
     tasks: allTasks,
-    
+
     // Mobile-compatible property names
     bestPartner: Array.isArray(sel?.BestPartner) ? sel.BestPartner.map(b => ({ Name: textOf(b?.Name), ContactSerial: textOf(b?.ContactSerial), Amount: textOf(b?.Amount) })) : (sel?.BestPartner ? [{ Name: textOf(sel.BestPartner?.Name), ContactSerial: textOf(sel.BestPartner?.ContactSerial), Amount: textOf(sel.BestPartner?.Amount) }] : []),
     current: Array.isArray(sel?.Current) ? sel.Current.map(c => ({ Name: textOf(c?.Name), ContactSerial: textOf(c?.ContactSerial), Phone: textOf(c?.Phone) })) : (sel?.Current ? [{ Name: textOf(sel.Current?.Name), ContactSerial: textOf(sel.Current?.ContactSerial), Phone: textOf(sel.Current?.Phone) }] : []),
     recent: Array.isArray(sel?.Recent) ? sel.Recent.map(r => ({ Name: textOf(r?.Name), ContactSerial: textOf(r?.ContactSerial), Phone: textOf(r?.Phone) })) : (sel?.Recent ? [{ Name: textOf(sel.Recent?.Name), ContactSerial: textOf(sel.Recent?.ContactSerial), Phone: textOf(sel.Recent?.Phone) }] : []),
     tasksSummary: allTasks,
-    
+
     // DOV data - extract from nested structure or root level
     datesDov: {
       harmlessStarters: harmLessStarter,
@@ -649,18 +666,18 @@ export async function GetDashboard() {
     },
     // Mobile-compatible top-level dovTotal
     dovTotal: totalDov,
-    
+
     referralRevenue: (() => {
       // Try to get from explicit field first
       const explicitRevenue = getNumber(sel?.ReferralRevenue || sel?.ReferralRevenueGenerated || sel?.referralRevenue || dovFields?.ReferralRevenue)
       if (explicitRevenue > 0) return explicitRevenue
-      
+
       // If no explicit revenue, use the last value from revenue graph
       if (revenueGraphDataPoints.length > 0) {
         const lastValue = revenueGraphDataPoints[revenueGraphDataPoints.length - 1].value
         return lastValue || 0
       }
-      
+
       return 0
     })(),
     outcomes: {
@@ -670,11 +687,11 @@ export async function GetDashboard() {
       // Mobile-compatible property name
       partners: partner,
     },
-    
+
     // Graph data
     dovGraph: dovGraphDataPoints,
     revenueGraph: revenueGraphDataPoints,
-    
+
     // DOV array with Name and Count
     dovList: dovList,
   }
@@ -764,10 +781,10 @@ export async function UpdateFeedback({ Name, Email, Phone, Response, Update, Com
 export async function GetUserInfo() {
   const r = await callService('GetUserInfo')
   if (!r.success) return r
-  
+
   // Handle both correct spelling "Contact" and typo "Conctact"
   const contact = r.parsed?.Contact || r.parsed?.Conctact || {}
-  
+
   return {
     success: true,
     data: {
