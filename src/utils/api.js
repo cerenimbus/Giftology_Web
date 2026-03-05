@@ -17,7 +17,7 @@ import { handleApiTimeout } from './timeoutHandler'
 //  - If VITE_API_BASE is set, use that value (explicit override).
 //  - Else if in DEV mode use the local proxy path `/RRService` (no CORS).
 //  - Otherwise default to the canonical remote service URL.
-const DEFAULT_REMOTE = 'https://dev.ror.giftologygroup.com/'
+const DEFAULT_REMOTE = 'https://radar.Giftologygroup.com/RRService'
 const BASE = import.meta.env.VITE_API_BASE
   ? String(import.meta.env.VITE_API_BASE)
   : (import.meta.env.DEV ? '/RRService' : DEFAULT_REMOTE)
@@ -218,23 +218,40 @@ function textOf(v) {
   return ''
 }
 
+// 3/5/26
+// VC
 export async function AuthorizeUser(payload) {
-  // Build params for AuthorizeUser endpoint
   const deviceInfo = await getDeviceInfo()
+  const deviceId = await getDeviceId()
+
   const params = {
+    DeviceID: deviceId,
     DeviceType: payload.DeviceType || deviceInfo.DeviceType,
     DeviceModel: payload.DeviceModel || deviceInfo.DeviceModel,
     DeviceVersion: payload.DeviceVersion || deviceInfo.DeviceVersion,
     UserName: payload.UserName,
     Password: payload.Password,
     Language: payload.Language || 'EN',
-    MobileVersion: payload.MobileVersion || payload.GiftologyVersion || '1',
-    ...payload,
+    MobileVersion: payload.MobileVersion || '1',
   }
 
-  const paramOrder = ['DeviceID', 'DeviceType', 'DeviceModel', 'DeviceVersion', 'Date', 'Key', 'UserName', 'Password', 'Language', 'MobileVersion']
+  const paramOrder = [
+    'DeviceID',
+    'DeviceType',
+    'DeviceModel',
+    'DeviceVersion',
+    'Date',
+    'Key',
+    'UserName',
+    'Password',
+    'Language',
+    'MobileVersion'
+  ]
+
   return callService('AuthorizeUser', params, paramOrder)
 }
+
+//
 
 export async function AuthorizeDeviceID(payload) {
   // According to spec: DeviceID, UserName, and Password must be URLENCODED
