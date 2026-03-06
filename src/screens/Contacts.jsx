@@ -752,10 +752,16 @@ export default function Contacts() {
           </button>
         </div>
         
+        {/* JCM - 03/06/2026: Updated loading display from "Loading contacts..." to "Loading referral partners..." */}
         {loading && (
-          <div style={{ padding: '20px', textAlign: 'center' }}>Loading contacts...</div>
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading referral partners...</div>
         )}
         
+        {/* 
+          JCM - 03/06/2026 : Temporarily disabled error display and debug information UI.
+          This block shows API error messages and debug details when contacts fail to load.
+        */}
+        {/*
         {error && contacts.length === 0 && (
           <div style={{ padding: '20px', textAlign: 'center' }}>
             <div style={{ color: 'red', marginBottom: '10px' }}>Error: {error}</div>
@@ -772,7 +778,8 @@ export default function Contacts() {
             )}
           </div>
         )}
-        
+      */}
+
         {!loading && (
           <div className="contacts-table">
             {/* Table Headers */}
@@ -785,7 +792,7 @@ export default function Contacts() {
             {/* Table Rows */}
             <div className="table-body">
               {contacts.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center' }}>No contacts found</div>
+                <div style={{ padding: '20px', textAlign: 'center' }}>No Referral Partners found</div>
               ) : (
                 contacts.map((item) => (
                   <div key={item.id} className="table-row">
