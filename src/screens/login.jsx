@@ -17,7 +17,7 @@ import { saveLoginCredentials } from '../utils/storage.js';
 function GiftologyLogo({ width }) {
   // calculate height based on aspect ratio to prevent layout shifts
   const height = Math.round(width * 0.34);
-  
+
   return (
     <svg
       width={width}
@@ -68,10 +68,10 @@ function GiftologyLogo({ width }) {
 
 export default function Login() {
   const navigate = useNavigate();
-  
+
   // --- RESPONSIVE STATE ---
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  
+
   // Track screen resize
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -85,7 +85,7 @@ export default function Login() {
   // Dynamic calculations based on screen size
   // If screen is smaller than 380px, the logo shrinks to fit the screen minus padding
   const cardMaxWidth = 340;
-  const logoWidth = Math.min(cardMaxWidth, windowWidth - 40); 
+  const logoWidth = Math.min(cardMaxWidth, windowWidth - 40);
 
   // ------------------------
 
@@ -133,7 +133,7 @@ export default function Login() {
     // Adjust header width to match the dynamic logo width
     headerWrap: {
       ...styles.headerWrap,
-      width: '100%', 
+      width: '100%',
       maxWidth: cardMaxWidth
     },
     // Card becomes fluid (100%) but stops growing at 340px
@@ -210,7 +210,7 @@ export default function Login() {
           </button>
         </div>
         <label style={styles.label}>By logging into the system you agree to receive multi-factor-authentication by text message, data and message rates may apply.</label>
-        
+
         {/* Checkbox and Terms */}
         <div style={styles.checkboxRow}>
           <input
@@ -234,7 +234,7 @@ export default function Login() {
           <span style={styles.small}>
             Accept{' '}
             <a
-              href="https://radar.giftologygroup.com/terms.html"
+              href="/terms.html"
               target="_blank"
               rel="noreferrer"
               style={styles.link}
@@ -243,7 +243,7 @@ export default function Login() {
             </a>{' '}
             and{' '}
             <a
-              href="https://radar.giftologygroup.com/privacypolicy.html"
+              href="/privacypolicy.html"
               target="_blank"
               rel="noreferrer"
               style={styles.link}
@@ -262,7 +262,7 @@ export default function Login() {
           {loading ? 'Signing in...' : 'Log in'}
         </button>
 
-        
+
 
         {/* Reset password */}
         <div style={{ textAlign: 'center', marginTop: 10 }}>
