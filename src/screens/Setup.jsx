@@ -63,188 +63,186 @@ export default function Setup() {
     setResult(null);
     setError(null);
 
-  //   try {
-  //     // Use proxy in development, direct URL in production
-  //     const apiUrl = import.meta.env.DEV 
-  //       ? '/api/KEAP/giftology_setup.php'
-  //       : 'https://radar.giftologygroup.com/api/KEAP/giftology_setup.php';
+    //   try {
+    //     // Use proxy in development, direct URL in production
+    //     const apiUrl = import.meta.env.DEV 
+    //       ? '/api/KEAP/giftology_setup.php'
+    //       : 'https://radar.giftologygroup.com/api/KEAP/giftology_setup.php';
 
-  //     const response = await fetch(
-  //       apiUrl,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json"
-  //         },
-  //         body: JSON.stringify({ subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email })
-  //       }
-  //     );
-      
-  //     console.log('API URL:', apiUrl);
-  //     console.log('API Body:', { subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email });
-  //     console.log('API Response:', response);
+    //     const response = await fetch(
+    //       apiUrl,
+    //       {
+    //         method: "POST",
+    //         headers: {
+    //           "Content-Type": "application/json"
+    //         },
+    //         body: JSON.stringify({ subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email })
+    //       }
+    //     );
 
-  //     // Get response text first to check if it's JSON
-  //     const responseText = await response.text();
-      
-  //     // Log the response for debugging
-  //     console.log('API Response Status:', response.status);
-  //     console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
-  //     console.log('API Response Text (first 500 chars):', responseText.substring(0, 500));
-      
-  //     // Check if response is HTML (error page)
-  //     if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-  //       // Try to extract error message from HTML if possible
-  //       const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
-  //       const errorMsg = titleMatch ? titleMatch[1] : 'Unknown error';
-  //       throw new Error(`Server returned an HTML page instead of JSON. Page title: "${errorMsg}". The API endpoint may not exist or the proxy configuration may be incorrect.`);
-  //     }
+    //     console.log('API URL:', apiUrl);
+    //     console.log('API Body:', { subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email });
+    //     console.log('API Response:', response);
 
-  //     if (!response.ok) {
-  //       throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 200)}`);
-  //     }
+    //     // Get response text first to check if it's JSON
+    //     const responseText = await response.text();
 
-  //     // Try to parse as JSON
-  //     let data;
-  //     try {
-  //       data = JSON.parse(responseText);
-  //       console.log('Parsed API Response:', data);
-  //       console.log('Created Tags:', data.created_tags);
-  //     } catch (parseError) {
-  //       throw new Error(`Invalid JSON response from server. Response: ${responseText.substring(0, 200)}`);
-  //     }
+    //     // Log the response for debugging
+    //     console.log('API Response Status:', response.status);
+    //     console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
+    //     console.log('API Response Text (first 500 chars):', responseText.substring(0, 500));
 
-  //     setResult(data);
-  //   } catch (err) {
-  //     const errorMessage = err.message || "Failed to run setup. Please try again.";
-  //     setError(errorMessage);
-  //     console.error('Setup error:', err);
-  //   }
+    //     // Check if response is HTML (error page)
+    //     if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+    //       // Try to extract error message from HTML if possible
+    //       const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
+    //       const errorMsg = titleMatch ? titleMatch[1] : 'Unknown error';
+    //       throw new Error(`Server returned an HTML page instead of JSON. Page title: "${errorMsg}". The API endpoint may not exist or the proxy configuration may be incorrect.`);
+    //     }
 
-  //   setLoading(false);
-  // };
+    //     if (!response.ok) {
+    //       throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 200)}`);
+    //     }
 
-  // try {
-  //   const apiUrl = import.meta.env.DEV 
-  //     ? '/api/KEAP/giftology_setup.php'
-  //     : 'https://radar.giftologygroup.com/api/KEAP/giftology_setup.php';
-  
-  //   const response = await fetch(apiUrl, {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({
-  //       subscriber_serial: userInfo?.subscriber,
-  //       useremail: userInfo?.email
-  //     })
-  //   });
-  
-  //   // Read raw text first
-  //   const responseText = await response.text();
-  
-  //   // Detect HTML error pages
-  //   if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
-  //     const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
-  //     const errorMsg = titleMatch ? titleMatch[1] : "Unknown HTML error";
-  //     throw new Error(`Server returned HTML. Page title: "${errorMsg}".`);
-  //   }
-  
-  //   // Parse JSON
-  //   let data;
-  //   try {
-  //     data = JSON.parse(responseText);
-  //   } catch {
-  //     throw new Error("Invalid JSON from server: " + responseText.substring(0, 300));
-  //   }
-  
-  //   console.log("Parsed API Response:", data);
-  
-  //   // ⭐ Handle 401 redirects exactly like your earlier .then() version
-  //   if (response.status === 401 && data.authorize_url) {
-  //     console.log("Redirecting to authorize_url:", data.authorize_url);
-  //     window.location.href = data.authorize_url;
-  //     return; // stop execution
-  //   }
-  
-  //   // Handle other HTTP errors
-  //   if (!response.ok) {
-  //     throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText}`);
-  //   }
-  
-  //   console.log("Setup result:", data);
-  
-  //   // Save data
-  //   setResult(data);
-  
-  // } catch (err) {
-  //   setError(err.message || "Failed to run setup. Please try again.");
-  //   console.error("Setup error:", err);
-  // }
-  
-  // setLoading(false);
-  try {
-    const apiUrl = import.meta.env.DEV 
-      ? '/api/KEAP/giftology_setup.php'
-      : 'https://radar.giftologygroup.com/api/KEAP/giftology_setup.php';
-  
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        subscriber_serial: userInfo?.subscriber,
-        useremail: userInfo?.email
-      })
-    });
-  console.log('API Body:', { subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email });
-  console.log('API Response:', response);
-  
-    const responseText = await response.text();
-  
-    // Detect HTML error pages
-    if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
-      const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
-      const errorMsg = titleMatch ? titleMatch[1] : "Unknown HTML error";
-      throw new Error(`Server returned HTML. Page title: "${errorMsg}".`);
-    }
-  
-    // Parse JSON
-    let data;
+    //     // Try to parse as JSON
+    //     let data;
+    //     try {
+    //       data = JSON.parse(responseText);
+    //       console.log('Parsed API Response:', data);
+    //       console.log('Created Tags:', data.created_tags);
+    //     } catch (parseError) {
+    //       throw new Error(`Invalid JSON response from server. Response: ${responseText.substring(0, 200)}`);
+    //     }
+
+    //     setResult(data);
+    //   } catch (err) {
+    //     const errorMessage = err.message || "Failed to run setup. Please try again.";
+    //     setError(errorMessage);
+    //     console.error('Setup error:', err);
+    //   }
+
+    //   setLoading(false);
+    // };
+
+    // try {
+    //   const apiUrl = import.meta.env.DEV 
+    //     ? '/api/KEAP/giftology_setup.php'
+    //     : 'https://radar.giftologygroup.com/api/KEAP/giftology_setup.php';
+
+    //   const response = await fetch(apiUrl, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       subscriber_serial: userInfo?.subscriber,
+    //       useremail: userInfo?.email
+    //     })
+    //   });
+
+    //   // Read raw text first
+    //   const responseText = await response.text();
+
+    //   // Detect HTML error pages
+    //   if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
+    //     const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
+    //     const errorMsg = titleMatch ? titleMatch[1] : "Unknown HTML error";
+    //     throw new Error(`Server returned HTML. Page title: "${errorMsg}".`);
+    //   }
+
+    //   // Parse JSON
+    //   let data;
+    //   try {
+    //     data = JSON.parse(responseText);
+    //   } catch {
+    //     throw new Error("Invalid JSON from server: " + responseText.substring(0, 300));
+    //   }
+
+    //   console.log("Parsed API Response:", data);
+
+    //   // ⭐ Handle 401 redirects exactly like your earlier .then() version
+    //   if (response.status === 401 && data.authorize_url) {
+    //     console.log("Redirecting to authorize_url:", data.authorize_url);
+    //     window.location.href = data.authorize_url;
+    //     return; // stop execution
+    //   }
+
+    //   // Handle other HTTP errors
+    //   if (!response.ok) {
+    //     throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText}`);
+    //   }
+
+    //   console.log("Setup result:", data);
+
+    //   // Save data
+    //   setResult(data);
+
+    // } catch (err) {
+    //   setError(err.message || "Failed to run setup. Please try again.");
+    //   console.error("Setup error:", err);
+    // }
+
+    // setLoading(false);
     try {
-      data = JSON.parse(responseText);
-    } catch {
-      throw new Error("Invalid JSON from server: " + responseText.substring(0, 300));
+      const apiUrl = '/api/KEAP/giftology_setup.php';
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscriber_serial: userInfo?.subscriber,
+          useremail: userInfo?.email
+        })
+      });
+      console.log('API Body:', { subscriber_serial: userInfo?.subscriber, useremail: userInfo?.email });
+      console.log('API Response:', response);
+
+      const responseText = await response.text();
+
+      // Detect HTML error pages
+      if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
+        const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
+        const errorMsg = titleMatch ? titleMatch[1] : "Unknown HTML error";
+        throw new Error(`Server returned HTML. Page title: "${errorMsg}".`);
+      }
+
+      // Parse JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error("Invalid JSON from server: " + responseText.substring(0, 300));
+      }
+
+      console.log("Parsed API Response:", data);
+
+      // ⭐ Handle 401 + authorize_url with 2 second delay
+      if (response.status === 401 && data.authorize_url) {
+        console.error("Authorization required. Redirecting in 2 seconds...");
+
+        // show error in your UI
+        setError(data.message || "Authorization required");
+
+        setTimeout(() => {
+          window.location.href = data.authorize_url;
+        }, 2000); // 2 seconds
+
+        return; // stop further code
+      }
+
+      // Other errors
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText}`);
+      }
+
+      console.log("Setup result:", data);
+      setResult(data);
+
+    } catch (err) {
+      setError(err.message || "Failed to run setup. Please try again.");
+      console.error("Setup error:", err);
     }
-  
-    console.log("Parsed API Response:", data);
-  
-    // ⭐ Handle 401 + authorize_url with 2 second delay
-    if (response.status === 401 && data.authorize_url) {
-      console.error("Authorization required. Redirecting in 2 seconds...");
-  
-      // show error in your UI
-      setError(data.message || "Authorization required");
-  
-      setTimeout(() => {
-        window.location.href = data.authorize_url;
-      }, 2000); // 2 seconds
-  
-      return; // stop further code
-    }
-  
-    // Other errors
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status} ${response.statusText}. Response: ${responseText}`);
-    }
-  
-    console.log("Setup result:", data);
-    setResult(data);
-  
-  } catch (err) {
-    setError(err.message || "Failed to run setup. Please try again.");
-    console.error("Setup error:", err);
-  }
-  
-  setLoading(false);
-  
+
+    setLoading(false);
+
   };
 
   // All styles defined inside component to access isMobile
@@ -442,7 +440,7 @@ export default function Setup() {
             <div style={{ color: '#999' }}>ROR</div>
           </div>
           <div>
-            <HamburgerMenu 
+            <HamburgerMenu
               menuItems={getMenuItems()}
               onItemClick={handleMenuClick}
               isDesktop={isDesktop}
@@ -454,7 +452,7 @@ export default function Setup() {
 
       {/* Left Sidebar */}
       {isDesktop && (
-        <Sidebar 
+        <Sidebar
           onItemClick={handleMenuClick}
           currentPath={location.pathname}
         />
@@ -499,8 +497,8 @@ export default function Setup() {
                   <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 600 }}>Tag Sync Results:</h4>
                   <ul style={styles.list}>
                     {result.created_tags.map((t, index) => {
-                      const tagName = t.tag_name || t.tag ;
-                    //   const keapId = t.keap_id;
+                      const tagName = t.tag_name || t.tag;
+                      //   const keapId = t.keap_id;
                       return (
                         <li key={index} style={styles.listItem}>
                           <strong>{tagName}</strong>
