@@ -274,18 +274,7 @@ export default function Dashboard() {
             </Card>
 
             <Card title='Dates & DOV' span={cols === 1 ? 1 : 2} isDesktop={isDesktop}>
-              {/* OBP 03/10/26 Removed Month dropdown per requirement to simplify dashboard UI.
-                  The dropdown was not functional and cluttered the Dates & DOV section.
-                  Old code removed:
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', flex: 1 }}>
-                      Pills here
-                    </div>
-                    <div style={{ marginLeft: 16 }}>
-                      <select with month options>
-                    </div>
-                  </div>
-              */}
+              {/* OBP 03/10/26 Removed Month dropdown per requirement to simplify dashboard UI. */}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                 <Pill label='Harmless Starters' value={formatNumber(d.datesDov?.harmlessStarters || 0)} />
                 <Pill label='Greenlight Questions' value={formatNumber(d.datesDov?.greenlightQuestions || 0)} />
