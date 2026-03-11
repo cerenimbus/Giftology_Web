@@ -274,41 +274,11 @@ export default function Dashboard() {
             </Card>
 
             <Card title='Dates & DOV' span={cols === 1 ? 1 : 2} isDesktop={isDesktop}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', flex: 1 }}>
-                  <Pill label='Harmless Starters' value={formatNumber(d.datesDov?.harmlessStarters || 0)} />
-                  <Pill label='Greenlight Questions' value={formatNumber(d.datesDov?.greenlightQuestions || 0)} />
-                  <Pill label='Clarity Convos' value={formatNumber(d.datesDov?.clarityConvos || 0)} />
-                </div>
-                <div style={{ marginLeft: 16 }}>
-                  <select 
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 6,
-                      border: '1px solid #ddd',
-                      backgroundColor: '#fff',
-                      fontSize: 14,
-                      color: '#333',
-                      cursor: 'pointer',
-                      minWidth: 120
-                    }}
-                    defaultValue="all"
-                  >
-                    <option value="all">Months</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                  </select>
-                </div>
+              {/* OBP 03/10/26 Removed Month dropdown per requirement to simplify dashboard UI. */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+                <Pill label='Harmless Starters' value={formatNumber(d.datesDov?.harmlessStarters || 0)} />
+                <Pill label='Greenlight Questions' value={formatNumber(d.datesDov?.greenlightQuestions || 0)} />
+                <Pill label='Clarity Convos' value={formatNumber(d.datesDov?.clarityConvos || 0)} />
               </div>
 
               {/* DOV Activities List */}
