@@ -148,9 +148,12 @@ export default function Contacts() {
         const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}-${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
         const key = CryptoJS.SHA1(deviceId + dateStr + ac).toString(CryptoJS.enc.Hex)
         
+        // Use a relative base URL so this build works on any host (prod/test/dev)
+        // without needing changes. If VITE_API_BASE is provided at build time,
+        // it will override this and can point to a different origin if needed.
         const BASE = import.meta.env.VITE_API_BASE
           ? String(import.meta.env.VITE_API_BASE)
-          : (import.meta.env.DEV ? '/RRService' : 'https://radar.Giftologygroup.com/RRService')
+          : '/RRService'
         
         const params = new URLSearchParams({
           DeviceID: encodeURIComponent(deviceId),
@@ -749,10 +752,16 @@ export default function Contacts() {
           </button>
         </div>
         
+        {/* JCM - 03/06/2026: Updated loading display from "Loading contacts..." to "Loading referral partners..." */}
         {loading && (
-          <div style={{ padding: '20px', textAlign: 'center' }}>Loading contacts...</div>
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading referral partners...</div>
         )}
         
+        {/* 
+          JCM - 03/06/2026 : Temporarily disabled error display and debug information UI.
+          This block shows API error messages and debug details when contacts fail to load.
+        */}
+        {/*
         {error && contacts.length === 0 && (
           <div style={{ padding: '20px', textAlign: 'center' }}>
             <div style={{ color: 'red', marginBottom: '10px' }}>Error: {error}</div>
@@ -769,7 +778,8 @@ export default function Contacts() {
             )}
           </div>
         )}
-        
+      */}
+
         {!loading && (
           <div className="contacts-table">
             {/* Table Headers */}
@@ -782,7 +792,7 @@ export default function Contacts() {
             {/* Table Rows */}
             <div className="table-body">
               {contacts.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center' }}>No contacts found</div>
+                <div style={{ padding: '20px', textAlign: 'center' }}>No Referral Partners found</div>
               ) : (
                 contacts.map((item) => (
                   <div key={item.id} className="table-row">
