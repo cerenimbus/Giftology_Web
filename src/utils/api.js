@@ -39,8 +39,8 @@ function mask(s, keep = 4) {
   return `${s.slice(0, keep)}...${s.slice(-keep)}`
 }
 
-function buildUrl(functionName, params = {}, paramOrder = null) {
-  // Use unencoded param concatenation to match the mobile client's behavior.
+// M.G. 4-16-2026 — Param string for GET (?…) or POST body.
+function buildQueryString(params = {}, paramOrder = null) {
   const parts = []
   const keys = paramOrder || Object.keys(params || {})
 
@@ -51,8 +51,12 @@ function buildUrl(functionName, params = {}, paramOrder = null) {
     }
   })
 
-  const qs = parts.length ? `?${parts.join('&')}` : ''
-  return `${BASE}/${functionName}.php${qs}`
+  return parts.join('&')
+}
+
+function buildUrl(functionName, params = {}, paramOrder = null) {
+  const qs = buildQueryString(params, paramOrder)
+  return qs ? `${BASE}/${functionName}.php?${qs}` : `${BASE}/${functionName}.php`
 }
 
 // fetch wrapper with timeout
@@ -140,9 +144,14 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
   console.log(`[callService] UserName:`, params.UserName ? 'present' : 'missing', params.UserName)
   console.log(`[callService] Password:`, params.Password ? 'present' : 'missing', params.Password ? '***' : '')
   console.log(`[callService] paramOrder:`, paramOrder)
-  const url = buildUrl(functionName, params, paramOrder)
+  // M.G. 4-16-2026 — POST when options.method is POST; otherwise still GET (unchanged).
+  const queryString = buildQueryString(params, paramOrder)
+  const endpoint = `${BASE}/${functionName}.php`
+  const usePost = String(options.method || '').toUpperCase() === 'POST'
+  const url = usePost ? endpoint : buildUrl(functionName, params, paramOrder)
 
-  console.log(`[callService] Request URL: ${url.replace(/([&?]AC=)[^&]*/, '$1***')}`)
+  const maskedQuery = queryString.replace(/(^|&)AC=[^&]*/, '$1AC=***')
+  console.log(`[callService] Request ${usePost ? 'POST' : 'GET'} ${usePost ? endpoint : url.replace(/([&?]AC=)[^&]*/, '$1***')}`)
 
   try {
     const debugOn = getDebugFlag && getDebugFlag()
@@ -152,13 +161,24 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
       if (masked.Key) masked.Key = mask(masked.Key)
       if (masked.DeviceID) masked.DeviceID = mask(masked.DeviceID)
       log(`[RRService] Request ${functionName} params:`, masked)
-      log(`[RRService] Request URL (masked AC):`, url.replace(/([&?]AC=)[^&]*/,'$1***'))
-      log(`[RRService] Request URL (full):`, url)
+      if (usePost) {
+        log(`[RRService] Request POST body (masked AC):`, maskedQuery)
+        log(`[RRService] Request POST body (full):`, queryString)
+      } else {
+        log(`[RRService] Request URL (masked AC):`, url.replace(/([&?]AC=)[^&]*/, '$1***'))
+        log(`[RRService] Request URL (full):`, url)
+      }
     }
 
     console.log(`[callService] Fetching from API...`)
-    // Fetch with timeout
-    const res = await fetchWithTimeout(url, {}, 30000)
+    const fetchOpts = usePost
+      ? {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: queryString,
+        }
+      : {}
+    const res = await fetchWithTimeout(url, fetchOpts, 30000)
     console.log(`[callService] Response status: ${res.status} ${res.statusText}`)
     
     const txt = await res.text()
@@ -235,7 +255,8 @@ export async function AuthorizeUser(payload) {
   }
 
   const paramOrder = ['DeviceID','DeviceType','DeviceModel','DeviceVersion','Date','Key','UserName','Password','Language','MobileVersion']
-  return callService('AuthorizeUser', params, paramOrder)
+  // M.G. 4-16-2026 — Web login: AuthorizeUser uses POST.
+  return callService('AuthorizeUser', params, paramOrder, { method: 'POST' })
 }
 
 export async function AuthorizeDeviceID(payload) {
