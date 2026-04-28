@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    //M.G. 4/28/2026
+    // Forward browser /RRService/* to dev host so local Vite can call RRService without CORS changes.
     // Proxy /RRService/* requests to the real API during development to avoid CORS
     proxy: {
       '/RRService': {
