@@ -262,8 +262,8 @@ export default function Login() {
           {loading ? 'Signing in...' : 'Log in'}
         </button>
 
-        
-
+        {/*M.G. 4/28/2026
+          Link to the forgot-password flow (same screen handles request-email and set-password from email link). */}
         {/* Reset password */}
         <div style={{ textAlign: 'center', marginTop: 10 }}>
           <Link to="/forgot" style={styles.reset}>

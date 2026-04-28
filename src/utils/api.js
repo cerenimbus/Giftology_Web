@@ -39,23 +39,29 @@ function mask(s, keep = 4) {
   return `${s.slice(0, keep)}...${s.slice(-keep)}`
 }
 
+//M.G. 4/28/2026
+// Encodes each query value when encodeValues is true so GET params (e.g. Password, Date) are safe in the URL; used by password reset and similar calls.
 // M.G. 4-16-2026 — Param string for GET (?…) or POST body.
-function buildQueryString(params = {}, paramOrder = null) {
+// encodeValues: when true, encode each value with encodeURIComponent (needed for Password and Date on GET)
+function buildQueryString(params = {}, paramOrder = null, { encodeValues = false } = {}) {
   const parts = []
   const keys = paramOrder || Object.keys(params || {})
 
   keys.forEach((k) => {
     const v = params[k]
     if (v !== undefined && v !== null) {
-      parts.push(`${k}=${v}`)
+      const val = String(v)
+      parts.push(encodeValues ? `${k}=${encodeURIComponent(val)}` : `${k}=${val}`)
     }
   })
 
   return parts.join('&')
 }
 
-function buildUrl(functionName, params = {}, paramOrder = null) {
-  const qs = buildQueryString(params, paramOrder)
+//M.G. 4/28/2026
+// Builds the full PHP endpoint URL and passes encodeValues through to buildQueryString for safe GET query strings.
+function buildUrl(functionName, params = {}, paramOrder = null, encodeValues = false) {
+  const qs = buildQueryString(params, paramOrder, { encodeValues })
   return qs ? `${BASE}/${functionName}.php?${qs}` : `${BASE}/${functionName}.php`
 }
 
@@ -145,10 +151,13 @@ export async function callService(functionName, extraParams = {}, paramOrder = n
   console.log(`[callService] Password:`, params.Password ? 'present' : 'missing', params.Password ? '***' : '')
   console.log(`[callService] paramOrder:`, paramOrder)
   // M.G. 4-16-2026 — POST when options.method is POST; otherwise still GET (unchanged).
-  const queryString = buildQueryString(params, paramOrder)
+  //M.G. 4/28/2026
+  // When encodeQueryValues is true, all param values are URI-encoded (needed for GET reset-password with Password in the query).
+  const encodeQ = options.encodeQueryValues === true
+  const queryString = buildQueryString(params, paramOrder, { encodeValues: encodeQ })
   const endpoint = `${BASE}/${functionName}.php`
   const usePost = String(options.method || '').toUpperCase() === 'POST'
-  const url = usePost ? endpoint : buildUrl(functionName, params, paramOrder)
+  const url = usePost ? endpoint : buildUrl(functionName, params, paramOrder, encodeQ)
 
   const maskedQuery = queryString.replace(/(^|&)AC=[^&]*/, '$1AC=***')
   console.log(`[callService] Request ${usePost ? 'POST' : 'GET'} ${usePost ? endpoint : url.replace(/([&?]AC=)[^&]*/, '$1***')}`)
@@ -744,8 +753,60 @@ export async function GetContact({ Serial }) {
   return { success: true, data: { name: c?.Name, serial: Number(c?.Serial), status: c?.Status } }
 }
 
-export async function ResetPassword({ Email }) {
-  return callService('ResetPassword', { Email })
+//M.G. 4/28/2026
+// Calls RequestResetPassword.php with Key = SHA-1(deviceId + date + email) so the server can verify and email a reset link.
+export async function requestResetPassword({ email, language = 'EN' }) {
+  const e = (email || '').trim()
+  if (!e) {
+    return { success: false, errorNumber: 104, message: 'Email is required' }
+  }
+  const deviceId = (await getDeviceId()) || ''
+  const d = new Date()
+  const dateStr = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}-${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const key = sha1(deviceId + dateStr + e)
+  return callService(
+    'RequestResetPassword',
+    {
+      DeviceID: deviceId,
+      Date: dateStr,
+      Key: key,
+      Email: e,
+      MobileVersion: MOBILE_VERSION,
+      Language: language,
+    },
+    ['DeviceID', 'Date', 'Key', 'Email', 'MobileVersion', 'Language'],
+    { skipAC: true, encodeQueryValues: true }
+  )
+}
+
+//M.G. 4/28/2026
+// Calls ResetPassword.php with AC from the email link and Key = SHA-1(deviceId + date + ac) plus the new password.
+export async function resetPasswordFromLink({ deviceId, date, ac, password }) {
+  const d = (deviceId || '').trim()
+  const dt = (date || '').trim()
+  const token = (ac || '').trim()
+  if (!d || !dt || !token || !password) {
+    return {
+      success: false,
+      errorNumber: 104,
+      message: 'Required information not supplied',
+      parsed: null,
+      requestUrl: '',
+    }
+  }
+  const key = sha1(d + dt + token)
+  return callService(
+    'ResetPassword',
+    {
+      DeviceID: d,
+      Date: dt,
+      Key: key,
+      AC: token,
+      Password: password,
+    },
+    ['DeviceID', 'Date', 'Key', 'AC', 'Password'],
+    { skipAC: true, encodeQueryValues: true }
+  )
 }
 
 export async function GetHelp({ HelpID }) {
